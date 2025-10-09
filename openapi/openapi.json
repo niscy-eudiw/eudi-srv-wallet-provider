@@ -1,0 +1,256 @@
+{
+  "openapi": "3.1.2",
+  "info": {
+    "title": "EUDI Wallet Provider",
+    "description": "A microservice acting as a Wallet Provider",
+    "version": "0.0.1"
+  },
+  "paths": {
+    "/challenge": {
+      "post": {
+        "tags": [
+          "challenge"
+        ],
+        "operationId": "generateChallenge",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChallengeResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/wallet-application-attestation/android": {
+      "post": {
+        "tags": [
+          "wallet-application-attestation"
+        ],
+        "operationId": "generateAndroidWalletApplicationAttestation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AndroidWalletApplicationAttestationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletApplicationAttestationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletApplicationAttestationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/wallet-application-attestation/ios": {
+      "post": {
+        "tags": [
+          "wallet-application-attestation"
+        ],
+        "operationId": "generateIosWalletApplicationAttestation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IosWalletApplicationAttestationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletApplicationAttestationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletApplicationAttestationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Challenge": {
+        "type": "string",
+        "format": "base64url"
+      },
+      "ChallengeResponse": {
+        "type": "object",
+        "properties": {
+          "challenge": {
+            "$ref": "#/components/schemas/Challenge"
+          }
+        },
+        "required": [
+          "challenge"
+        ],
+        "additionalProperties": false
+      },
+      "Certificate": {
+        "description": "A Base64 Url-Safe DER encoded X509Certificate",
+        "type": "string",
+        "format": "base64url"
+      },
+      "CertificateChain": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Certificate"
+        },
+        "minItems": 1
+      },
+      "AndroidKeystoreAttestation": {
+        "type": "object",
+        "properties": {
+          "x5c": {
+            "$ref": "#/components/schemas/CertificateChain"
+          }
+        },
+        "required": [
+          "x5c"
+        ],
+        "additionalProperties": false
+      },
+      "ClientId": {
+        "type": "string"
+      },
+      "AndroidWalletApplicationAttestationRequest": {
+        "type": "object",
+        "properties": {
+          "keyAttestation": {
+            "$ref": "#/components/schemas/AndroidKeystoreAttestation"
+          },
+          "challenge": {
+            "$ref": "#/components/schemas/Challenge"
+          },
+          "clientId": {
+            "$ref": "#/components/schemas/ClientId"
+          }
+        },
+        "required": [
+          "keyAttestation",
+          "challenge",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "IosHomebrewAttestation": {
+        "type": "object",
+        "properties": {
+          "attestation": {
+            "type": "string",
+            "format": "base64url"
+          },
+          "clientDataJSON": {
+            "type": "string",
+            "format": "base64url"
+          }
+        },
+        "required": [
+          "attestation",
+          "clientDataJSON"
+        ],
+        "additionalProperties": false
+      },
+      "IosWalletApplicationAttestationRequest": {
+        "type": "object",
+        "properties": {
+          "keyAttestation": {
+            "$ref": "#/components/schemas/IosHomebrewAttestation"
+          },
+          "challenge": {
+            "$ref": "#/components/schemas/Challenge"
+          },
+          "clientId": {
+            "$ref": "#/components/schemas/ClientId"
+          }
+        },
+        "required": [
+          "keyAttestation",
+          "challenge",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "WalletApplicationAttestationResponse": {
+        "type": "object",
+        "properties": {
+          "walletApplicationAttestation": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "walletApplicationAttestation"
+        ],
+        "additionalProperties": false
+      },
+      "WalletApplicationAttestationError": {
+        "type": "string",
+        "enum": [
+          "invalid_challenge",
+          "invalid_key_attestation",
+          "unsupported_attested_key"
+        ]
+      },
+      "WalletApplicationAttestationErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/WalletApplicationAttestationError"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
