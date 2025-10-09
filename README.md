@@ -291,7 +291,7 @@ Default value: N/A
 Duration types support unit strings in the following format (lower case only), with an optional space between the unit value and the unit type.
 
 * `ns`, `nano`, `nanos`, `nanosecond`, `nanoseconds`
-* `us`, `micro`, `micros`, `microsecond, `microseconds`
+* `us`, `micro`, `micros`, `microsecond`, `microseconds`
 * `ms`, `milli`, `millis`, `millisecond`, `milliseconds`
 * `s`, `second`, `seconds`
 * `m`, `minute`, `minutes`
