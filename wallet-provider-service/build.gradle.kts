@@ -165,6 +165,20 @@ jib {
                 fromEnvironmentVariable("OCI_VENDOR", "org.opencontainers.image.vendor")
             }
     }
+
+    extraDirectories {
+        paths {
+            path {
+                setFrom(
+                    rootProject.layout.projectDirectory
+                        .dir("openapi")
+                        .asFile,
+                )
+                into = "/openapi"
+                includes = listOf("openapi.json")
+            }
+        }
+    }
 }
 
 dependencyCheck {
