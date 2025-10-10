@@ -255,11 +255,7 @@ private fun createWardenAttestationService(
                                 IOSAttestationConfiguration.AppData(
                                     teamIdentifier = application.team.value,
                                     bundleIdentifier = application.bundle.value,
-                                    sandbox =
-                                        when (application.environment) {
-                                            IosEnvironment.Production -> false
-                                            IosEnvironment.Sandbox -> true
-                                        },
+                                    sandbox = IosEnvironment.Sandbox == application.environment,
                                 )
                             },
                         attestationStatementValiditySeconds = attestationStatementValiditySkew.inWholeSeconds,
