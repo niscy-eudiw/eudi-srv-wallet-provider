@@ -36,7 +36,7 @@ import kotlin.time.Duration.Companion.seconds
 data class WalletProviderConfiguration(
     val server: ServerConfiguration = ServerConfiguration(),
     val signingKey: SigningKeyConfiguration = SigningKeyConfiguration.GenerateRandom,
-    val attestationVerification: AttestationVerificationConfiguration = AttestationVerificationConfiguration.Disabled,
+    val keyAttestationVerification: KeyAttestationVerificationConfiguration = KeyAttestationVerificationConfiguration.Disabled,
     val challenge: ChallengeConfiguration = ChallengeConfiguration(),
     val walletApplicationAttestation: WalletApplicationAttestationConfiguration,
 )
@@ -98,17 +98,17 @@ class SignatureAlgorithmDecoder : Decoder<SignatureAlgorithm> {
         }
 }
 
-sealed interface AttestationVerificationConfiguration {
-    data object Disabled : AttestationVerificationConfiguration
+sealed interface KeyAttestationVerificationConfiguration {
+    data object Disabled : KeyAttestationVerificationConfiguration
 
     data class Enabled(
-        val androidAttestation: AndroidAttestationConfiguration = AndroidAttestationConfiguration(),
-        val iosAttestation: IosAttestationConfiguration = IosAttestationConfiguration(),
+        val android: AndroidKeyAttestationConfiguration = AndroidKeyAttestationConfiguration(),
+        val ios: IosKeyAttestationConfiguration = IosKeyAttestationConfiguration(),
         val verificationTimeSkew: Duration = 0.seconds,
-    ) : AttestationVerificationConfiguration
+    ) : KeyAttestationVerificationConfiguration
 }
 
-data class AndroidAttestationConfiguration(
+data class AndroidKeyAttestationConfiguration(
     val applications: List<ApplicationConfiguration> = emptyList(),
     val strongBoxRequired: Boolean = false,
     val unlockedBootloaderAllowed: Boolean = false,
@@ -136,7 +136,7 @@ sealed interface AttestationStatementValidity {
     ) : AttestationStatementValidity
 }
 
-data class IosAttestationConfiguration(
+data class IosKeyAttestationConfiguration(
     val applications: List<ApplicationConfiguration> = emptyList(),
     val attestationStatementValiditySkew: Duration = 5.minutes,
 ) {

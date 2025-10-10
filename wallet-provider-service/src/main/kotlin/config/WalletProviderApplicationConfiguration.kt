@@ -29,7 +29,7 @@ import at.asitplus.signum.supreme.sign.Signer
 import eu.europa.ec.eudi.walletprovider.adapter.jose.SignumSignJwt
 import eu.europa.ec.eudi.walletprovider.adapter.jose.SignumValidateJwtSignature
 import eu.europa.ec.eudi.walletprovider.adapter.keyattestation.WardenValidateKeyAttestation
-import eu.europa.ec.eudi.walletprovider.config.IosAttestationConfiguration.ApplicationConfiguration.IosEnvironment
+import eu.europa.ec.eudi.walletprovider.config.IosKeyAttestationConfiguration.ApplicationConfiguration.IosEnvironment
 import eu.europa.ec.eudi.walletprovider.domain.AttestationBasedClientAuthenticationSpec
 import eu.europa.ec.eudi.walletprovider.domain.JwtType
 import eu.europa.ec.eudi.walletprovider.domain.time.Clock
@@ -85,13 +85,13 @@ suspend fun Application.configureWalletProviderApplication(config: WalletProvide
         )
 
     val validateChallenge =
-        when (config.attestationVerification) {
-            AttestationVerificationConfiguration.Disabled -> {
+        when (config.keyAttestationVerification) {
+            KeyAttestationVerificationConfiguration.Disabled -> {
                 logger.warn("Challenge Verification is currently disabled")
                 ValidateChallengeNoop
             }
 
-            is AttestationVerificationConfiguration.Enabled -> ValidateChallengeLive(SignumValidateJwtSignature(signer, json))
+            is KeyAttestationVerificationConfiguration.Enabled -> ValidateChallengeLive(SignumValidateJwtSignature(signer, json))
         }
 
     val wardenAttestationService = createWardenAttestationService(config, clock)
@@ -214,15 +214,15 @@ private fun createWardenAttestationService(
     config: WalletProviderConfiguration,
     clock: Clock,
 ): AttestationService =
-    when (config.attestationVerification) {
-        AttestationVerificationConfiguration.Disabled -> {
+    when (config.keyAttestationVerification) {
+        KeyAttestationVerificationConfiguration.Disabled -> {
             logger.warn("Attestation Verification is currently disabled")
             NoopAttestationService
         }
 
-        is AttestationVerificationConfiguration.Enabled -> {
+        is KeyAttestationVerificationConfiguration.Enabled -> {
             val androidAttestation: AndroidAttestationConfiguration =
-                with(config.attestationVerification.androidAttestation) {
+                with(config.keyAttestationVerification.android) {
                     AndroidAttestationConfiguration(
                         applications =
                             applications.map { application ->
@@ -248,7 +248,7 @@ private fun createWardenAttestationService(
                 }
 
             val iosAttestation: IOSAttestationConfiguration =
-                with(config.attestationVerification.iosAttestation) {
+                with(config.keyAttestationVerification.ios) {
                     IOSAttestationConfiguration(
                         applications =
                             applications.map { application ->
@@ -266,7 +266,7 @@ private fun createWardenAttestationService(
                 androidAttestationConfiguration = androidAttestation,
                 iosAttestationConfiguration = iosAttestation,
                 clock = clock.toKotlinClock().toDeprecatedClock(),
-                verificationTimeOffset = config.attestationVerification.verificationTimeSkew,
+                verificationTimeOffset = config.keyAttestationVerification.verificationTimeSkew,
             )
         }
     }
