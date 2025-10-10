@@ -18,63 +18,24 @@ package eu.europa.ec.eudi.walletprovider.adapter.attestationsigning
 import arrow.core.Either
 import arrow.core.raise.catch
 import arrow.core.raise.either
-import at.asitplus.signum.indispensable.josef.JwsHeader
 import at.asitplus.signum.indispensable.josef.JwsSigned
-import at.asitplus.signum.indispensable.josef.toJsonWebKey
-import at.asitplus.signum.indispensable.josef.toJwsAlgorithm
-import at.asitplus.signum.indispensable.pki.CertificateChain
 import at.asitplus.signum.supreme.sign.Signer
 import at.asitplus.signum.supreme.sign.Verifier
 import at.asitplus.signum.supreme.sign.verifierFor
 import at.asitplus.signum.supreme.sign.verify
-import at.asitplus.signum.supreme.signature
 import eu.europa.ec.eudi.walletprovider.domain.attestationsigning.AttestationSignatureValidationFailure
-import eu.europa.ec.eudi.walletprovider.domain.attestationsigning.AttestationType
 import eu.europa.ec.eudi.walletprovider.domain.toNonBlankString
-import eu.europa.ec.eudi.walletprovider.port.output.attestationsigning.SignAttestation
 import eu.europa.ec.eudi.walletprovider.port.output.attestationsigning.ValidateAttestationSignature
 import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
 
 class AttestationSigningService(
     private val signer: Signer,
-    private val certificateChain: CertificateChain?,
     private val json: Json,
 ) {
     private val verifier: Verifier by lazy {
         signer.signatureAlgorithm.verifierFor(signer.publicKey).getOrThrow()
     }
-
-    val signAttestation: SignAttestation =
-        object : SignAttestation {
-            override suspend fun <T : Any> invoke(
-                attestation: T,
-                serializer: SerializationStrategy<T>,
-                type: AttestationType,
-            ): JwsSigned<T> {
-                val header =
-                    JwsHeader(
-                        algorithm = signer.signatureAlgorithm.toJwsAlgorithm().getOrThrow(),
-                        certificateChain = certificateChain?.takeIf { it.isNotEmpty() },
-                        jsonWebKey =
-                            if (certificateChain.isNullOrEmpty())
-                                signer.publicKey.toJsonWebKey()
-                            else
-                                null,
-                        type = type.type,
-                    )
-                val plainSignatureInput =
-                    JwsSigned.prepareJwsSignatureInput(
-                        header = header,
-                        payload = attestation,
-                        serializer = serializer,
-                        json = json,
-                    )
-                val signature = signer.sign(plainSignatureInput).signature
-                return JwsSigned(header, attestation, signature, plainSignatureInput)
-            }
-        }
 
     val validateAttestationSignature: ValidateAttestationSignature =
         object : ValidateAttestationSignature {

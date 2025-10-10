@@ -25,11 +25,10 @@ import at.asitplus.signum.indispensable.josef.toJsonWebKey
 import eu.europa.ec.eudi.walletprovider.domain.ClientId
 import eu.europa.ec.eudi.walletprovider.domain.Issuer
 import eu.europa.ec.eudi.walletprovider.domain.StringUrl
-import eu.europa.ec.eudi.walletprovider.domain.attestationsigning.AttestationType
 import eu.europa.ec.eudi.walletprovider.domain.challenge.Challenge
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.*
 import eu.europa.ec.eudi.walletprovider.port.input.challenge.ValidateChallenge
-import eu.europa.ec.eudi.walletprovider.port.output.attestationsigning.SignAttestation
+import eu.europa.ec.eudi.walletprovider.port.output.jose.SignJwt
 import eu.europa.ec.eudi.walletprovider.port.output.keyattestation.ValidateKeyAttestation
 import eu.europa.ec.eudi.walletprovider.time.Clock
 import kotlinx.serialization.Required
@@ -70,7 +69,7 @@ class GenerateWalletApplicationAttestationLive(
     private val walletName: WalletName?,
     private val walletLink: StringUrl?,
     private val walletInformation: WalletInformation,
-    private val signAttestation: SignAttestation,
+    private val signJwt: SignJwt<WalletApplicationAttestationClaims>,
 ) : GenerateWalletApplicationAttestation {
     override suspend fun invoke(
         request: WalletApplicationAttestationRequest<*>,
@@ -102,10 +101,6 @@ class GenerateWalletApplicationAttestationLive(
                     walletInformation = walletInformation,
                 )
 
-            signAttestation(
-                clientAttestation,
-                WalletApplicationAttestationClaims.serializer(),
-                AttestationType.WalletApplicationAttestation,
-            )
+            signJwt(clientAttestation)
         }
 }

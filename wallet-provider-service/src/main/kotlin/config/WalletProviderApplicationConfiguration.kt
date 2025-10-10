@@ -27,8 +27,10 @@ import at.asitplus.signum.indispensable.pki.X509Certificate
 import at.asitplus.signum.supreme.os.JKSProvider
 import at.asitplus.signum.supreme.sign.Signer
 import eu.europa.ec.eudi.walletprovider.adapter.attestationsigning.AttestationSigningService
+import eu.europa.ec.eudi.walletprovider.adapter.jose.SignumSignJwt
 import eu.europa.ec.eudi.walletprovider.adapter.warden.WarderAttestationVerificationService
 import eu.europa.ec.eudi.walletprovider.domain.arf.GeneralInformation
+import eu.europa.ec.eudi.walletprovider.domain.attestationsigning.AttestationType
 import eu.europa.ec.eudi.walletprovider.domain.ios.IosEnvironment
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletInformation
 import eu.europa.ec.eudi.walletprovider.port.input.challenge.GenerateChallengeLive
@@ -67,23 +69,19 @@ suspend fun Application.configureWalletProviderApplication(config: WalletProvide
 
     configureServerPlugins(json)
 
-    val attestationSigningService =
-        run {
-            val (signer, certificateChain) =
-                when (val config = config.signingKey) {
-                    SigningKeyConfiguration.GenerateRandom -> generateRandomSigner() to null
-                    is SigningKeyConfiguration.LoadFromKeystore -> loadSignerAndCertificateChainFromKeystore(config)
-                }
-
-            AttestationSigningService(signer, certificateChain, json)
+    val (signer, certificateChain) =
+        when (val config = config.signingKey) {
+            SigningKeyConfiguration.GenerateRandom -> generateRandomSigner() to null
+            is SigningKeyConfiguration.LoadFromKeystore -> loadSignerAndCertificateChainFromKeystore(config)
         }
+    val attestationSigningService = AttestationSigningService(signer, json)
 
     val generateChallenge =
         GenerateChallengeLive(
             clock = clock,
             length = config.challenge.length,
             validity = config.challenge.validity,
-            signAttestation = attestationSigningService.signAttestation,
+            signJwt = SignumSignJwt(signer, certificateChain, AttestationType.ChallengeAttestation, json),
         )
 
     val validateChallenge =
@@ -118,7 +116,7 @@ suspend fun Application.configureWalletProviderApplication(config: WalletProvide
                             certification = config.walletApplicationAttestation.walletInformation.certification,
                         ),
                 ),
-            signAttestation = attestationSigningService.signAttestation,
+            signJwt = SignumSignJwt(signer, certificateChain, AttestationType.WalletApplicationAttestation, json),
         )
 
     configureChallengeRoutes(generateChallenge)

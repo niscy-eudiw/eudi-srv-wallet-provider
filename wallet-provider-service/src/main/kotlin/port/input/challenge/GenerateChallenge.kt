@@ -17,11 +17,10 @@ package eu.europa.ec.eudi.walletprovider.port.input.challenge
 
 import eu.europa.ec.eudi.walletprovider.domain.Length
 import eu.europa.ec.eudi.walletprovider.domain.PositiveDuration
-import eu.europa.ec.eudi.walletprovider.domain.attestationsigning.AttestationType
 import eu.europa.ec.eudi.walletprovider.domain.challenge.Challenge
 import eu.europa.ec.eudi.walletprovider.domain.challenge.ChallengeClaims
 import eu.europa.ec.eudi.walletprovider.domain.challenge.toChallenge
-import eu.europa.ec.eudi.walletprovider.port.output.attestationsigning.SignAttestation
+import eu.europa.ec.eudi.walletprovider.port.output.jose.SignJwt
 import eu.europa.ec.eudi.walletprovider.time.Clock
 import java.security.SecureRandom
 import kotlin.random.asKotlinRandom
@@ -34,7 +33,7 @@ class GenerateChallengeLive(
     private val clock: Clock,
     private val length: Length,
     private val validity: PositiveDuration,
-    private val signAttestation: SignAttestation,
+    private val signJwt: SignJwt<ChallengeClaims>,
 ) : GenerateChallenge {
     private val secureRandom = SecureRandom().asKotlinRandom()
 
@@ -47,7 +46,7 @@ class GenerateChallengeLive(
                 notBefore = now,
                 expiresAt = expiresAt,
             )
-        val challengeAttestation = signAttestation(challengeClaims, ChallengeClaims.serializer(), AttestationType.ChallengeAttestation)
+        val challengeAttestation = signJwt(challengeClaims)
         return challengeAttestation.toChallenge()
     }
 }

@@ -13,16 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.europa.ec.eudi.walletprovider.port.output.attestationsigning
+package eu.europa.ec.eudi.walletprovider.port.output.jose
 
 import at.asitplus.signum.indispensable.josef.JwsSigned
-import eu.europa.ec.eudi.walletprovider.domain.attestationsigning.AttestationType
-import kotlinx.serialization.SerializationStrategy
 
-interface SignAttestation {
-    suspend operator fun <T : Any> invoke(
-        attestation: T,
-        serializer: SerializationStrategy<T>,
-        type: AttestationType,
-    ): JwsSigned<T>
+fun interface SignJwt<T : Any> {
+    suspend operator fun invoke(claims: T): JwsSigned<T>
 }
