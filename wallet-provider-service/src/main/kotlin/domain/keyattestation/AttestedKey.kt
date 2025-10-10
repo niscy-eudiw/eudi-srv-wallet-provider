@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.europa.ec.eudi.walletprovider.domain.ios
+package eu.europa.ec.eudi.walletprovider.domain.keyattestation
 
-import eu.europa.ec.eudi.walletprovider.domain.NonBlankString
+import at.asitplus.attestation.AttestationResult
+import at.asitplus.signum.indispensable.CryptoPublicKey
 
-typealias TeamIdentifier = NonBlankString
-typealias BundleIdentifier = NonBlankString
-
-enum class IosEnvironment {
-    Production,
-    Sandbox,
+data class AttestedKey(
+    val publicKey: CryptoPublicKey,
+    val attestationResult: AttestationResult,
+) {
+    init {
+        require(attestationResult !is AttestationResult.Error) { "attestationResult cannot be Error" }
+    }
 }

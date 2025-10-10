@@ -22,17 +22,8 @@ import com.sksamuel.hoplite.decoder.Decoder
 import com.sksamuel.hoplite.fp.invalid
 import com.sksamuel.hoplite.fp.valid
 import eu.europa.ec.eudi.walletprovider.domain.*
-import eu.europa.ec.eudi.walletprovider.domain.android.PackageName
-import eu.europa.ec.eudi.walletprovider.domain.arf.CertificationInformation
-import eu.europa.ec.eudi.walletprovider.domain.arf.ProviderName
-import eu.europa.ec.eudi.walletprovider.domain.arf.SolutionId
-import eu.europa.ec.eudi.walletprovider.domain.arf.SolutionVersion
-import eu.europa.ec.eudi.walletprovider.domain.ios.BundleIdentifier
-import eu.europa.ec.eudi.walletprovider.domain.ios.IosEnvironment
-import eu.europa.ec.eudi.walletprovider.domain.ios.TeamIdentifier
-import eu.europa.ec.eudi.walletprovider.domain.server.Port
-import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletApplicationAttestationValidity
-import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletName
+import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.*
+import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.WalletApplicationAttestationValidity
 import kotlinx.serialization.json.JsonPrimitive
 import java.nio.file.Path
 import kotlin.io.encoding.Base64
@@ -56,6 +47,17 @@ data class ServerConfiguration(
     val grace: ZeroOrPositiveDuration = ZeroOrPositiveDuration(5.seconds),
     val timeout: ZeroOrPositiveDuration = ZeroOrPositiveDuration(5.seconds),
 )
+
+@JvmInline
+value class Port(
+    val value: UInt,
+) {
+    init {
+        require(value > 0u) { "value must be greater than 0" }
+    }
+
+    override fun toString(): String = value.toString()
+}
 
 sealed interface SigningKeyConfiguration {
     data object GenerateRandom : SigningKeyConfiguration
@@ -121,7 +123,9 @@ data class AndroidAttestationConfiguration(
     data class ApplicationConfiguration(
         val packageName: PackageName,
         val signingCertificateDigests: NonEmptyList<Base64UrlSafeByteArray>,
-    )
+    ) {
+        typealias PackageName = NonBlankString
+    }
 }
 
 sealed interface AttestationStatementValidity {
@@ -140,7 +144,15 @@ data class IosAttestationConfiguration(
         val team: TeamIdentifier,
         val bundle: BundleIdentifier,
         val environment: IosEnvironment = IosEnvironment.Production,
-    )
+    ) {
+        typealias TeamIdentifier = NonBlankString
+        typealias BundleIdentifier = NonBlankString
+
+        enum class IosEnvironment {
+            Production,
+            Sandbox,
+        }
+    }
 }
 
 data class ChallengeConfiguration(

@@ -16,14 +16,27 @@
 package eu.europa.ec.eudi.walletprovider.port.output.keyattestation
 
 import arrow.core.Either
+import at.asitplus.attestation.AttestationException
 import at.asitplus.signum.indispensable.Attestation
+import eu.europa.ec.eudi.walletprovider.domain.NonBlankString
 import eu.europa.ec.eudi.walletprovider.domain.challenge.Challenge
 import eu.europa.ec.eudi.walletprovider.domain.keyattestation.AttestedKey
-import eu.europa.ec.eudi.walletprovider.domain.keyattestation.KeyAttestationValidationFailure
 
 fun interface ValidateKeyAttestation {
     suspend operator fun invoke(
         unvalidatedKeyAttestation: Attestation,
         challenge: Challenge,
     ): Either<KeyAttestationValidationFailure, AttestedKey>
+}
+
+sealed interface KeyAttestationValidationFailure {
+    class InvalidKeyAttestation(
+        val error: NonBlankString,
+        val cause: AttestationException? = null,
+    ) : KeyAttestationValidationFailure
+
+    class UnsupportedAttestedKey(
+        val error: NonBlankString,
+        val cause: Throwable? = null,
+    ) : KeyAttestationValidationFailure
 }

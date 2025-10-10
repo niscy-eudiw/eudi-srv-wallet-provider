@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.europa.ec.eudi.walletprovider.time
+package eu.europa.ec.eudi.walletprovider.domain.time
 
 import kotlinx.datetime.TimeZone
 import kotlin.time.Instant

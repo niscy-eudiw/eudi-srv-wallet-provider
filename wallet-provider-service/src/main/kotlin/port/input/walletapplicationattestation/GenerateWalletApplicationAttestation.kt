@@ -22,17 +22,19 @@ import at.asitplus.signum.indispensable.Attestation
 import at.asitplus.signum.indispensable.IosHomebrewAttestation
 import at.asitplus.signum.indispensable.josef.ConfirmationClaim
 import at.asitplus.signum.indispensable.josef.toJsonWebKey
+import eu.europa.ec.eudi.walletprovider.domain.ARF
 import eu.europa.ec.eudi.walletprovider.domain.ClientId
 import eu.europa.ec.eudi.walletprovider.domain.Issuer
 import eu.europa.ec.eudi.walletprovider.domain.StringUrl
 import eu.europa.ec.eudi.walletprovider.domain.challenge.Challenge
+import eu.europa.ec.eudi.walletprovider.domain.time.Clock
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.*
 import eu.europa.ec.eudi.walletprovider.port.input.challenge.ValidateChallenge
 import eu.europa.ec.eudi.walletprovider.port.output.jose.SignJwt
 import eu.europa.ec.eudi.walletprovider.port.output.keyattestation.ValidateKeyAttestation
-import eu.europa.ec.eudi.walletprovider.time.Clock
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
+import kotlin.time.Duration
 
 sealed interface WalletApplicationAttestationRequest<out KeyAttestation : Attestation> {
     val keyAttestation: KeyAttestation
@@ -58,6 +60,22 @@ fun interface GenerateWalletApplicationAttestation {
     suspend operator fun invoke(
         request: WalletApplicationAttestationRequest<*>,
     ): Either<WalletApplicationAttestationGenerationFailure, WalletApplicationAttestation>
+}
+
+@JvmInline
+value class WalletApplicationAttestationValidity(
+    val value: Duration,
+) {
+    init {
+        require(value.isPositive() && value <= ARF.MAX_WALLET_APPLICATION_ATTESTATION_VALIDITY)
+    }
+
+    override fun toString(): String = value.toString()
+
+    companion object {
+        val ArfMax: WalletApplicationAttestationValidity =
+            WalletApplicationAttestationValidity(ARF.MAX_WALLET_APPLICATION_ATTESTATION_VALIDITY)
+    }
 }
 
 class GenerateWalletApplicationAttestationLive(

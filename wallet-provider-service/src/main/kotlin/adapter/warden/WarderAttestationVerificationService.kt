@@ -19,8 +19,8 @@ import arrow.core.left
 import arrow.core.right
 import at.asitplus.signum.indispensable.toCryptoPublicKey
 import eu.europa.ec.eudi.walletprovider.domain.keyattestation.AttestedKey
-import eu.europa.ec.eudi.walletprovider.domain.keyattestation.KeyAttestationValidationFailure
 import eu.europa.ec.eudi.walletprovider.domain.toNonBlankString
+import eu.europa.ec.eudi.walletprovider.port.output.keyattestation.KeyAttestationValidationFailure
 import eu.europa.ec.eudi.walletprovider.port.output.keyattestation.ValidateKeyAttestation
 import at.asitplus.attestation.AttestationService as WardenAttestationService
 

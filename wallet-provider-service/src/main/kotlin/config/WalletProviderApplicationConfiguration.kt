@@ -29,16 +29,17 @@ import at.asitplus.signum.supreme.sign.Signer
 import eu.europa.ec.eudi.walletprovider.adapter.jose.SignumSignJwt
 import eu.europa.ec.eudi.walletprovider.adapter.jose.SignumValidateJwtSignature
 import eu.europa.ec.eudi.walletprovider.adapter.warden.WarderAttestationVerificationService
-import eu.europa.ec.eudi.walletprovider.domain.arf.GeneralInformation
-import eu.europa.ec.eudi.walletprovider.domain.attestationsigning.AttestationType
-import eu.europa.ec.eudi.walletprovider.domain.ios.IosEnvironment
+import eu.europa.ec.eudi.walletprovider.config.IosAttestationConfiguration.ApplicationConfiguration.IosEnvironment
+import eu.europa.ec.eudi.walletprovider.domain.AttestationBasedClientAuthenticationSpec
+import eu.europa.ec.eudi.walletprovider.domain.AttestationType
+import eu.europa.ec.eudi.walletprovider.domain.time.Clock
+import eu.europa.ec.eudi.walletprovider.domain.time.toKotlinClock
+import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.GeneralInformation
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletInformation
 import eu.europa.ec.eudi.walletprovider.port.input.challenge.GenerateChallengeLive
 import eu.europa.ec.eudi.walletprovider.port.input.challenge.ValidateChallengeLive
 import eu.europa.ec.eudi.walletprovider.port.input.challenge.ValidateChallengeNoop
 import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.GenerateWalletApplicationAttestationLive
-import eu.europa.ec.eudi.walletprovider.time.Clock
-import eu.europa.ec.eudi.walletprovider.time.toKotlinClock
 import io.ktor.http.CacheControl.*
 import io.ktor.http.content.*
 import io.ktor.serialization.kotlinx.json.*
@@ -80,7 +81,7 @@ suspend fun Application.configureWalletProviderApplication(config: WalletProvide
             clock = clock,
             length = config.challenge.length,
             validity = config.challenge.validity,
-            signJwt = SignumSignJwt(signer, certificateChain, AttestationType.ChallengeAttestation, json),
+            signJwt = SignumSignJwt(signer, certificateChain, AttestationType("challenge+jwt"), json),
         )
 
     val validateChallenge =
@@ -115,7 +116,13 @@ suspend fun Application.configureWalletProviderApplication(config: WalletProvide
                             certification = config.walletApplicationAttestation.walletInformation.certification,
                         ),
                 ),
-            signJwt = SignumSignJwt(signer, certificateChain, AttestationType.WalletApplicationAttestation, json),
+            signJwt =
+                SignumSignJwt(
+                    signer,
+                    certificateChain,
+                    AttestationType(AttestationBasedClientAuthenticationSpec.CLIENT_ATTESTATION_JWT_TYPE),
+                    json,
+                ),
         )
 
     configureChallengeRoutes(generateChallenge)

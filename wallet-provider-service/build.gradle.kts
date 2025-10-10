@@ -92,6 +92,7 @@ kotlin {
             "-Xjsr305=strict",
             "-Xconsistent-data-class-copy-visibility",
             "-Xcontext-parameters",
+            "-Xnested-type-aliases",
         )
         optIn.addAll(
             "kotlin.io.encoding.ExperimentalEncodingApi",

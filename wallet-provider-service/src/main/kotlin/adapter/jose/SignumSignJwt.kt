@@ -22,7 +22,7 @@ import at.asitplus.signum.indispensable.josef.toJwsAlgorithm
 import at.asitplus.signum.indispensable.pki.CertificateChain
 import at.asitplus.signum.supreme.sign.Signer
 import at.asitplus.signum.supreme.signature
-import eu.europa.ec.eudi.walletprovider.domain.attestationsigning.AttestationType
+import eu.europa.ec.eudi.walletprovider.domain.AttestationType
 import eu.europa.ec.eudi.walletprovider.port.output.jose.SignJwt
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
@@ -45,7 +45,7 @@ class SignumSignJwt<T : Any>(
                         signer.publicKey.toJsonWebKey()
                     else
                         null,
-                type = type.type,
+                type = type.value,
             )
         val plainSignatureInput =
             JwsSigned.prepareJwsSignatureInput(

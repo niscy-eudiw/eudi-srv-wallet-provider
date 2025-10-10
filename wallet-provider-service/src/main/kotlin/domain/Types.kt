@@ -90,3 +90,5 @@ typealias StringUri =
 typealias StringUrl =
     @Serializable(with = UrlStringSerializer::class)
     URL
+
+typealias AttestationType = NonBlankString

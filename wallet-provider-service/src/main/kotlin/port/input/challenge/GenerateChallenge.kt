@@ -20,8 +20,8 @@ import eu.europa.ec.eudi.walletprovider.domain.PositiveDuration
 import eu.europa.ec.eudi.walletprovider.domain.challenge.Challenge
 import eu.europa.ec.eudi.walletprovider.domain.challenge.ChallengeClaims
 import eu.europa.ec.eudi.walletprovider.domain.challenge.toChallenge
+import eu.europa.ec.eudi.walletprovider.domain.time.Clock
 import eu.europa.ec.eudi.walletprovider.port.output.jose.SignJwt
-import eu.europa.ec.eudi.walletprovider.time.Clock
 import java.security.SecureRandom
 import kotlin.random.asKotlinRandom
 

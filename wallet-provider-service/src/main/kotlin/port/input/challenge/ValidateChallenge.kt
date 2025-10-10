@@ -19,11 +19,11 @@ import arrow.core.Either
 import arrow.core.raise.either
 import arrow.core.raise.ensure
 import arrow.core.right
+import eu.europa.ec.eudi.walletprovider.domain.AttestationBasedClientAuthenticationSpec
+import eu.europa.ec.eudi.walletprovider.domain.NonBlankString
 import eu.europa.ec.eudi.walletprovider.domain.RFC7519
-import eu.europa.ec.eudi.walletprovider.domain.attestationsigning.AttestationType
 import eu.europa.ec.eudi.walletprovider.domain.challenge.Challenge
 import eu.europa.ec.eudi.walletprovider.domain.challenge.ChallengeClaims
-import eu.europa.ec.eudi.walletprovider.domain.challenge.ChallengeVerificationFailure
 import eu.europa.ec.eudi.walletprovider.domain.toNonBlankString
 import eu.europa.ec.eudi.walletprovider.port.output.jose.JwtSignatureValidationFailure
 import eu.europa.ec.eudi.walletprovider.port.output.jose.ValidateJwtSignature
@@ -33,8 +33,13 @@ fun interface ValidateChallenge {
     suspend operator fun invoke(
         challenge: Challenge,
         at: Instant,
-    ): Either<ChallengeVerificationFailure, Unit>
+    ): Either<ChallengeValidationFailure, Unit>
 }
+
+class ChallengeValidationFailure(
+    val error: NonBlankString,
+    val cause: Throwable? = null,
+)
 
 class ValidateChallengeLive(
     private val validateJwtSignature: ValidateJwtSignature<ChallengeClaims>,
@@ -42,7 +47,7 @@ class ValidateChallengeLive(
     override suspend fun invoke(
         challenge: Challenge,
         at: Instant,
-    ): Either<ChallengeVerificationFailure, Unit> =
+    ): Either<ChallengeValidationFailure, Unit> =
         either {
             validateJwtSignature(challenge.value.decodeToString()).fold(
                 ifLeft = {
@@ -54,25 +59,25 @@ class ValidateChallengeLive(
                             is JwtSignatureValidationFailure.UnparsableJwt ->
                                 "Challenge is not valid: ${it.error}".toNonBlankString() to it.cause
                         }
-                    raise(ChallengeVerificationFailure(error, cause))
+                    raise(ChallengeValidationFailure(error, cause))
                 },
                 ifRight = { challengeAttestation ->
-                    ensure(challengeAttestation.header.type == AttestationType.ChallengeAttestation.type) {
-                        ChallengeVerificationFailure(
+                    ensure(challengeAttestation.header.type == AttestationBasedClientAuthenticationSpec.CLIENT_ATTESTATION_JWT_TYPE) {
+                        ChallengeValidationFailure(
                             (
                                 "Challenge is not valid, contains invalid `${RFC7519.TYPE}`. " +
-                                    "Expected: '${AttestationType.ChallengeAttestation.type}', " +
+                                    "Expected: '${AttestationBasedClientAuthenticationSpec.CLIENT_ATTESTATION_JWT_TYPE}', " +
                                     "found: '${challengeAttestation.header.type ?: ""}'."
                             ).toNonBlankString(),
                         )
                     }
 
                     ensure(challengeAttestation.payload.notBefore <= at) {
-                        ChallengeVerificationFailure("Challenge is not active yet.".toNonBlankString())
+                        ChallengeValidationFailure("Challenge is not active yet.".toNonBlankString())
                     }
 
                     ensure(at < challengeAttestation.payload.expiresAt) {
-                        ChallengeVerificationFailure("Challenge is expired.".toNonBlankString())
+                        ChallengeValidationFailure("Challenge is expired.".toNonBlankString())
                     }
                 },
             )
@@ -83,5 +88,5 @@ object ValidateChallengeNoop : ValidateChallenge {
     override suspend fun invoke(
         challenge: Challenge,
         at: Instant,
-    ): Either<ChallengeVerificationFailure, Unit> = Unit.right()
+    ): Either<ChallengeValidationFailure, Unit> = Unit.right()
 }

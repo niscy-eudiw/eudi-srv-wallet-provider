@@ -18,7 +18,6 @@ package eu.europa.ec.eudi.walletprovider.domain.challenge
 import at.asitplus.signum.indispensable.josef.JwsSigned
 import eu.europa.ec.eudi.walletprovider.domain.Base64UrlSafeByteArray
 import eu.europa.ec.eudi.walletprovider.domain.EpochSecondsInstant
-import eu.europa.ec.eudi.walletprovider.domain.NonBlankString
 import eu.europa.ec.eudi.walletprovider.domain.RFC7519
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
@@ -58,8 +57,3 @@ value class Challenge(
 
     override fun toString(): String = value.toString()
 }
-
-class ChallengeVerificationFailure(
-    val error: NonBlankString,
-    val cause: Throwable? = null,
-)

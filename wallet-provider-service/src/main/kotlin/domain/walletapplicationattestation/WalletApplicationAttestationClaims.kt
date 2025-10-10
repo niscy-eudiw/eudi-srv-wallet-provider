@@ -18,36 +18,13 @@ package eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation
 import at.asitplus.signum.indispensable.josef.ConfirmationClaim
 import at.asitplus.signum.indispensable.josef.JwsSigned
 import eu.europa.ec.eudi.walletprovider.domain.*
-import eu.europa.ec.eudi.walletprovider.domain.arf.GeneralInformation
-import eu.europa.ec.eudi.walletprovider.domain.keyattestation.KeyAttestationValidationFailure
-import eu.europa.ec.eudi.walletprovider.domain.tokenstatuslist.Status
+import eu.europa.ec.eudi.walletprovider.port.output.keyattestation.KeyAttestationValidationFailure
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.time.Duration
-
-@JvmInline
-value class WalletApplicationAttestationValidity(
-    val value: Duration,
-) : Comparable<WalletApplicationAttestationValidity> {
-    init {
-        require(value.isPositive() && value <= ARF.MAX_WALLET_APPLICATION_ATTESTATION_VALIDITY)
-    }
-
-    override fun toString(): String = value.toString()
-
-    override fun compareTo(other: WalletApplicationAttestationValidity): Int = value.compareTo(other.value)
-
-    companion object {
-        val ArfMax: WalletApplicationAttestationValidity =
-            WalletApplicationAttestationValidity(ARF.MAX_WALLET_APPLICATION_ATTESTATION_VALIDITY)
-    }
-}
-
-@Serializable
-data class WalletInformation(
-    @Required @SerialName(ARF.GENERAL_INFO) val generalInformation: GeneralInformation,
-)
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
 data class WalletApplicationAttestationClaims(
@@ -65,6 +42,46 @@ data class WalletApplicationAttestationClaims(
 
 typealias WalletApplicationAttestation = JwsSigned<WalletApplicationAttestationClaims>
 typealias WalletName = NonBlankString
+
+@Serializable
+data class StatusListToken(
+    @Required @SerialName(TokenStatusListSpec.INDEX) val index: UInt,
+    @Required @SerialName(TokenStatusListSpec.URI) val uri: StringUri,
+)
+
+@Serializable
+data class Status(
+    @Required @SerialName(TokenStatusListSpec.STATUS_LIST) val statusList: StatusListToken,
+)
+
+@Serializable
+data class WalletInformation(
+    @Required @SerialName(ARF.GENERAL_INFO) val generalInformation: GeneralInformation,
+)
+
+@Serializable
+data class GeneralInformation(
+    @Required @SerialName(ARF.WALLET_PROVIDER_NAME) val provider: ProviderName,
+    @Required @SerialName(ARF.WALLET_SOLUTION_ID) val id: SolutionId,
+    @Required @SerialName(ARF.WALLET_SOLUTION_VERSION) val version: SolutionVersion,
+    @Required @SerialName(ARF.WALLET_SOLUTION_CERTIFICATION_INFORMATION) val certification: CertificationInformation,
+)
+
+typealias ProviderName = NonBlankString
+typealias SolutionId = NonBlankString
+typealias SolutionVersion = NonBlankString
+
+@JvmInline
+@Serializable
+value class CertificationInformation(
+    val value: JsonElement,
+) {
+    init {
+        require((value is JsonPrimitive && value.isString && value.content.isNotBlank()) || value is JsonObject)
+    }
+
+    override fun toString(): String = value.toString()
+}
 
 sealed interface WalletApplicationAttestationGenerationFailure {
     class InvalidChallenge(
