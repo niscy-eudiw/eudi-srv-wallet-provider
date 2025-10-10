@@ -30,61 +30,56 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import kotlin.reflect.KClass
+
+private val logger = LoggerFactory.getLogger("WalletApplicationAttestationRoutes")
 
 fun Application.configureWalletApplicationAttestationRoutes(issueWalletApplicationAttestation: IssueWalletApplicationAttestation) {
     routing {
         route("/wallet-application-attestation") {
+            suspend fun <T : WalletApplicationAttestationIssuanceRequest<*>> RoutingContext.issueWalletApplicationAttestation(
+                requestType: KClass<T>,
+            ) {
+                val request = call.receive(requestType)
+                logger.info("Received WalletApplicationAttestationIssuanceRequest: {}", request)
+
+                issueWalletApplicationAttestation(request)
+                    .fold(
+                        ifRight = { walletApplicationAttestation ->
+                            logger.info("Successfully issued WalletApplicationAttestation: {}", walletApplicationAttestation)
+                            call.respond(HttpStatusCode.OK, walletApplicationAttestation.toWalletApplicationAttestationResponse())
+                        },
+                        ifLeft = { failure ->
+                            logger.warn(failure)
+                            call.respond(HttpStatusCode.BadRequest, failure.toWalletApplicationAttestationErrorResponse())
+                        },
+                    )
+            }
+
             route("/android") {
                 post {
-                    context(issueWalletApplicationAttestation) {
-                        call.issueWalletApplicationAttestation<WalletApplicationAttestationIssuanceRequest.Android>()
-                    }
+                    issueWalletApplicationAttestation(WalletApplicationAttestationIssuanceRequest.Android::class)
                 }
             }
             route("/ios") {
                 post {
-                    context(issueWalletApplicationAttestation) {
-                        call.issueWalletApplicationAttestation<WalletApplicationAttestationIssuanceRequest.Ios>()
-                    }
+                    issueWalletApplicationAttestation(WalletApplicationAttestationIssuanceRequest.Ios::class)
                 }
             }
         }
     }
 }
 
-private val logger = LoggerFactory.getLogger("WalletApplicationAttestationRoutes")
-
-context(issueWalletApplicationAttestation: IssueWalletApplicationAttestation)
-private suspend inline fun <reified REQUEST : WalletApplicationAttestationIssuanceRequest<*>> RoutingCall.issueWalletApplicationAttestation() {
-    val request = receive<REQUEST>()
-    logger.info("Received WalletApplicationAttestationIssuanceRequest: {}", request)
-
-    issueWalletApplicationAttestation(request)
-        .fold(
-            ifRight = { walletApplicationAttestation ->
-                logger.info("Successfully issued WalletApplicationAttestation: {}", walletApplicationAttestation)
-                respond(HttpStatusCode.OK, walletApplicationAttestation.toWalletApplicationAttestationResponse())
-            },
-            ifLeft = { failure ->
-                context(logger) {
-                    failure.log()
-                }
-                respond(HttpStatusCode.BadRequest, failure.toWalletApplicationAttestationErrorResponse())
-            },
-        )
-}
-
-context(logger: Logger)
-private fun WalletApplicationAttestationIssuanceFailure.log() {
+private fun Logger.warn(failure: WalletApplicationAttestationIssuanceFailure) {
     val (error, cause) =
-        when (this) {
+        when (failure) {
             is WalletApplicationAttestationIssuanceFailure.InvalidChallenge ->
                 "WalletApplicationAttestationIssuanceRequest verification failed, " +
-                    "Challenge is not valid: $error" to
-                    cause
+                    "Challenge is not valid: ${failure.error}" to
+                    failure.cause
 
             is WalletApplicationAttestationIssuanceFailure.InvalidKeyAttestation -> {
-                when (val keyAttestationFailure = error) {
+                when (val keyAttestationFailure = failure.error) {
                     is KeyAttestationValidationFailure.InvalidKeyAttestation ->
                         "WalletApplicationAttestationIssuanceRequest verification failed, " +
                             "Key Attestation is not valid: ${keyAttestationFailure.error}" to
@@ -98,7 +93,7 @@ private fun WalletApplicationAttestationIssuanceFailure.log() {
             }
         }
 
-    logger.warn(error, cause)
+    warn(error, cause)
 }
 
 @Serializable
@@ -108,7 +103,8 @@ private data class WalletApplicationAttestationResponse(
     constructor(walletApplicationAttestation: WalletApplicationAttestation) : this(walletApplicationAttestation.serialize())
 }
 
-private fun WalletApplicationAttestation.toWalletApplicationAttestationResponse(): WalletApplicationAttestationResponse = WalletApplicationAttestationResponse(this)
+private fun WalletApplicationAttestation.toWalletApplicationAttestationResponse(): WalletApplicationAttestationResponse =
+    WalletApplicationAttestationResponse(this)
 
 @Serializable
 private enum class WalletApplicationAttestationError {
@@ -127,7 +123,8 @@ private data class WalletApplicationAttestationErrorResponse(
     @Required val error: WalletApplicationAttestationError,
 )
 
-private fun WalletApplicationAttestationIssuanceFailure.toWalletApplicationAttestationErrorResponse(): WalletApplicationAttestationErrorResponse =
+private fun WalletApplicationAttestationIssuanceFailure.toWalletApplicationAttestationErrorResponse():
+    WalletApplicationAttestationErrorResponse =
     when (this) {
         is WalletApplicationAttestationIssuanceFailure.InvalidChallenge -> WalletApplicationAttestationError.InvalidChallenge
         is WalletApplicationAttestationIssuanceFailure.InvalidKeyAttestation ->
