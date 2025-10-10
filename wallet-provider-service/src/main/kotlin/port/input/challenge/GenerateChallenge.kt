@@ -15,7 +15,10 @@
  */
 package eu.europa.ec.eudi.walletprovider.port.input.challenge
 
-import eu.europa.ec.eudi.walletprovider.domain.*
+import eu.europa.ec.eudi.walletprovider.domain.Base64UrlSafeByteArray
+import eu.europa.ec.eudi.walletprovider.domain.Challenge
+import eu.europa.ec.eudi.walletprovider.domain.EpochSecondsInstant
+import eu.europa.ec.eudi.walletprovider.domain.RFC7519
 import eu.europa.ec.eudi.walletprovider.domain.time.Clock
 import eu.europa.ec.eudi.walletprovider.port.output.jose.SignJwt
 import kotlinx.serialization.Required
@@ -23,6 +26,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.security.SecureRandom
 import kotlin.random.asKotlinRandom
+import kotlin.time.Duration
 
 fun interface GenerateChallenge {
     suspend operator fun invoke(): Challenge
@@ -71,4 +75,26 @@ class GenerateChallengeLive(
 
         override fun hashCode(): Int = 31 * (31 * challenge.contentHashCode() + notBefore.hashCode()) + expiresAt.hashCode()
     }
+}
+
+@JvmInline
+value class Length(
+    val value: UInt,
+) {
+    init {
+        require(value > 0u) { "value must be greater than 0" }
+    }
+
+    override fun toString(): String = value.toString()
+}
+
+@JvmInline
+value class PositiveDuration(
+    val value: Duration,
+) {
+    init {
+        require(value.isPositive()) { "value must be positive" }
+    }
+
+    override fun toString(): String = value.toString()
 }

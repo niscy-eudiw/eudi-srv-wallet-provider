@@ -21,8 +21,13 @@ import com.sksamuel.hoplite.*
 import com.sksamuel.hoplite.decoder.Decoder
 import com.sksamuel.hoplite.fp.invalid
 import com.sksamuel.hoplite.fp.valid
-import eu.europa.ec.eudi.walletprovider.domain.*
+import eu.europa.ec.eudi.walletprovider.domain.Base64UrlSafeByteArray
+import eu.europa.ec.eudi.walletprovider.domain.Issuer
+import eu.europa.ec.eudi.walletprovider.domain.NonBlankString
+import eu.europa.ec.eudi.walletprovider.domain.StringUrl
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.*
+import eu.europa.ec.eudi.walletprovider.port.input.challenge.Length
+import eu.europa.ec.eudi.walletprovider.port.input.challenge.PositiveDuration
 import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.WalletApplicationAttestationValidity
 import kotlinx.serialization.json.JsonPrimitive
 import java.nio.file.Path
@@ -54,6 +59,17 @@ value class Port(
 ) {
     init {
         require(value > 0u) { "value must be greater than 0" }
+    }
+
+    override fun toString(): String = value.toString()
+}
+
+@JvmInline
+value class ZeroOrPositiveDuration(
+    val value: Duration,
+) {
+    init {
+        require(!value.isNegative()) { "value must be positive or 0" }
     }
 
     override fun toString(): String = value.toString()

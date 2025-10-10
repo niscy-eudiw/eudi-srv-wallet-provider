@@ -22,7 +22,6 @@ import eu.europa.ec.eudi.walletprovider.adapter.serialization.UrlStringSerialize
 import kotlinx.serialization.Serializable
 import java.net.URI
 import java.net.URL
-import kotlin.time.Duration
 import kotlin.time.Instant
 
 typealias Base64UrlSafeByteArray =
@@ -32,39 +31,6 @@ typealias Base64UrlSafeByteArray =
 typealias EpochSecondsInstant =
     @Serializable(with = InstantLongSerializer::class)
     Instant
-
-@JvmInline
-value class ZeroOrPositiveDuration(
-    val value: Duration,
-) {
-    init {
-        require(!value.isNegative()) { "value must be positive or 0" }
-    }
-
-    override fun toString(): String = value.toString()
-}
-
-@JvmInline
-value class Length(
-    val value: UInt,
-) {
-    init {
-        require(value > 0u) { "value must be greater than 0" }
-    }
-
-    override fun toString(): String = value.toString()
-}
-
-@JvmInline
-value class PositiveDuration(
-    val value: Duration,
-) {
-    init {
-        require(value.isPositive()) { "value must be positive" }
-    }
-
-    override fun toString(): String = value.toString()
-}
 
 @JvmInline
 @Serializable
