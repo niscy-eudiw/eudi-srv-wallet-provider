@@ -15,7 +15,7 @@
  */
 package eu.europa.ec.eudi.walletprovider.config
 
-import eu.europa.ec.eudi.walletprovider.domain.challenge.Challenge
+import eu.europa.ec.eudi.walletprovider.domain.Challenge
 import eu.europa.ec.eudi.walletprovider.port.input.challenge.GenerateChallenge
 import io.ktor.http.*
 import io.ktor.server.application.*

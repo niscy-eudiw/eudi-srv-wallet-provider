@@ -81,7 +81,7 @@ suspend fun Application.configureWalletProviderApplication(config: WalletProvide
             clock = clock,
             length = config.challenge.length,
             validity = config.challenge.validity,
-            signJwt = SignumSignJwt(signer, certificateChain, AttestationType("challenge+jwt"), json),
+            signJwt = SignumSignJwt(signer, certificateChain, AttestationType(GenerateChallengeLive.CHALLENGE_JWT_TYPE), json),
         )
 
     val validateChallenge =

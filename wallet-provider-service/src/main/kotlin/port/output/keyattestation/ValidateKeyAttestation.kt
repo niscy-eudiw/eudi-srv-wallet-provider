@@ -18,8 +18,8 @@ package eu.europa.ec.eudi.walletprovider.port.output.keyattestation
 import arrow.core.Either
 import at.asitplus.attestation.AttestationException
 import at.asitplus.signum.indispensable.Attestation
+import eu.europa.ec.eudi.walletprovider.domain.Challenge
 import eu.europa.ec.eudi.walletprovider.domain.NonBlankString
-import eu.europa.ec.eudi.walletprovider.domain.challenge.Challenge
 import eu.europa.ec.eudi.walletprovider.domain.keyattestation.AttestedKey
 
 fun interface ValidateKeyAttestation {

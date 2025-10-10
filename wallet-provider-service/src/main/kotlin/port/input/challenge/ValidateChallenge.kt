@@ -19,11 +19,9 @@ import arrow.core.Either
 import arrow.core.raise.either
 import arrow.core.raise.ensure
 import arrow.core.right
-import eu.europa.ec.eudi.walletprovider.domain.AttestationBasedClientAuthenticationSpec
+import eu.europa.ec.eudi.walletprovider.domain.Challenge
 import eu.europa.ec.eudi.walletprovider.domain.NonBlankString
 import eu.europa.ec.eudi.walletprovider.domain.RFC7519
-import eu.europa.ec.eudi.walletprovider.domain.challenge.Challenge
-import eu.europa.ec.eudi.walletprovider.domain.challenge.ChallengeClaims
 import eu.europa.ec.eudi.walletprovider.domain.toNonBlankString
 import eu.europa.ec.eudi.walletprovider.port.output.jose.JwtSignatureValidationFailure
 import eu.europa.ec.eudi.walletprovider.port.output.jose.ValidateJwtSignature
@@ -42,7 +40,7 @@ class ChallengeValidationFailure(
 )
 
 class ValidateChallengeLive(
-    private val validateJwtSignature: ValidateJwtSignature<ChallengeClaims>,
+    private val validateJwtSignature: ValidateJwtSignature<GenerateChallengeLive.ChallengeClaims>,
 ) : ValidateChallenge {
     override suspend fun invoke(
         challenge: Challenge,
@@ -61,22 +59,23 @@ class ValidateChallengeLive(
                         }
                     raise(ChallengeValidationFailure(error, cause))
                 },
-                ifRight = { challengeAttestation ->
-                    ensure(challengeAttestation.header.type == AttestationBasedClientAuthenticationSpec.CLIENT_ATTESTATION_JWT_TYPE) {
+                ifRight = { challengeJwt ->
+                    ensure(challengeJwt.header.type == GenerateChallengeLive.CHALLENGE_JWT_TYPE) {
                         ChallengeValidationFailure(
                             (
                                 "Challenge is not valid, contains invalid `${RFC7519.TYPE}`. " +
-                                    "Expected: '${AttestationBasedClientAuthenticationSpec.CLIENT_ATTESTATION_JWT_TYPE}', " +
-                                    "found: '${challengeAttestation.header.type ?: ""}'."
+                                    "Expected: '${GenerateChallengeLive.CHALLENGE_JWT_TYPE}', " +
+                                    "found: '${challengeJwt.header.type ?: ""}'."
                             ).toNonBlankString(),
                         )
                     }
 
-                    ensure(challengeAttestation.payload.notBefore <= at) {
+                    val challengeClaims = challengeJwt.payload
+                    ensure(challengeClaims.notBefore <= at) {
                         ChallengeValidationFailure("Challenge is not active yet.".toNonBlankString())
                     }
 
-                    ensure(at < challengeAttestation.payload.expiresAt) {
+                    ensure(at < challengeClaims.expiresAt) {
                         ChallengeValidationFailure("Challenge is expired.".toNonBlankString())
                     }
                 },

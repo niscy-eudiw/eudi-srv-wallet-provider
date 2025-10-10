@@ -15,13 +15,12 @@
  */
 package eu.europa.ec.eudi.walletprovider.port.input.challenge
 
-import eu.europa.ec.eudi.walletprovider.domain.Length
-import eu.europa.ec.eudi.walletprovider.domain.PositiveDuration
-import eu.europa.ec.eudi.walletprovider.domain.challenge.Challenge
-import eu.europa.ec.eudi.walletprovider.domain.challenge.ChallengeClaims
-import eu.europa.ec.eudi.walletprovider.domain.challenge.toChallenge
+import eu.europa.ec.eudi.walletprovider.domain.*
 import eu.europa.ec.eudi.walletprovider.domain.time.Clock
 import eu.europa.ec.eudi.walletprovider.port.output.jose.SignJwt
+import kotlinx.serialization.Required
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import java.security.SecureRandom
 import kotlin.random.asKotlinRandom
 
@@ -46,7 +45,30 @@ class GenerateChallengeLive(
                 notBefore = now,
                 expiresAt = expiresAt,
             )
-        val challengeAttestation = signJwt(challengeClaims)
-        return challengeAttestation.toChallenge()
+        val challengeJwt = signJwt(challengeClaims)
+        return Challenge(challengeJwt.serialize().encodeToByteArray())
+    }
+
+    companion object {
+        const val CHALLENGE_JWT_TYPE = "challenge+jwt"
+    }
+
+    @Serializable
+    data class ChallengeClaims(
+        @Required @SerialName(CHALLENGE) val challenge: Base64UrlSafeByteArray,
+        @Required @SerialName(RFC7519.NOT_BEFORE) val notBefore: EpochSecondsInstant,
+        @Required @SerialName(RFC7519.EXPIRES_AT) val expiresAt: EpochSecondsInstant,
+    ) {
+        companion object {
+            const val CHALLENGE: String = "challenge"
+        }
+
+        override fun equals(other: Any?): Boolean =
+            if (other is ChallengeClaims)
+                challenge.contentEquals(other.challenge) && notBefore == other.notBefore && expiresAt == other.expiresAt
+            else
+                false
+
+        override fun hashCode(): Int = 31 * (31 * challenge.contentHashCode() + notBefore.hashCode()) + expiresAt.hashCode()
     }
 }

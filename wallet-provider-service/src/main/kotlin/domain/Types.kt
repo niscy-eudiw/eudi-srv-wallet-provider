@@ -92,3 +92,15 @@ typealias StringUrl =
     URL
 
 typealias AttestationType = NonBlankString
+
+@JvmInline
+@Serializable
+value class Challenge(
+    val value: Base64UrlSafeByteArray,
+) {
+    init {
+        require(value.isNotEmpty()) { "value must not be empty" }
+    }
+
+    override fun toString(): String = value.toString()
+}
