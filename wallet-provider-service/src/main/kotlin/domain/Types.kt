@@ -91,7 +91,7 @@ typealias StringUrl =
     @Serializable(with = UrlStringSerializer::class)
     URL
 
-typealias AttestationType = NonBlankString
+typealias JwtType = NonBlankString
 
 @JvmInline
 @Serializable

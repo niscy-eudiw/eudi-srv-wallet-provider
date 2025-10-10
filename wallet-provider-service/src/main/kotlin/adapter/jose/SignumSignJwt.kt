@@ -22,7 +22,7 @@ import at.asitplus.signum.indispensable.josef.toJwsAlgorithm
 import at.asitplus.signum.indispensable.pki.CertificateChain
 import at.asitplus.signum.supreme.sign.Signer
 import at.asitplus.signum.supreme.signature
-import eu.europa.ec.eudi.walletprovider.domain.AttestationType
+import eu.europa.ec.eudi.walletprovider.domain.JwtType
 import eu.europa.ec.eudi.walletprovider.port.output.jose.SignJwt
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
@@ -31,7 +31,7 @@ import kotlinx.serialization.serializer
 class SignumSignJwt<T : Any>(
     private val signer: Signer,
     private val certificateChain: CertificateChain?,
-    private val type: AttestationType,
+    private val type: JwtType,
     private val serializer: SerializationStrategy<T>,
     private val json: Json,
 ) : SignJwt<T> {
@@ -62,7 +62,7 @@ class SignumSignJwt<T : Any>(
         inline operator fun <reified T : Any> invoke(
             signer: Signer,
             certificateChain: CertificateChain?,
-            type: AttestationType,
+            type: JwtType,
             json: Json,
         ): SignumSignJwt<T> = SignumSignJwt(signer, certificateChain, type, serializer<T>(), json)
     }

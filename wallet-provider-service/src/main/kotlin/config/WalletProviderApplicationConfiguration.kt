@@ -31,7 +31,7 @@ import eu.europa.ec.eudi.walletprovider.adapter.jose.SignumValidateJwtSignature
 import eu.europa.ec.eudi.walletprovider.adapter.warden.WarderAttestationVerificationService
 import eu.europa.ec.eudi.walletprovider.config.IosAttestationConfiguration.ApplicationConfiguration.IosEnvironment
 import eu.europa.ec.eudi.walletprovider.domain.AttestationBasedClientAuthenticationSpec
-import eu.europa.ec.eudi.walletprovider.domain.AttestationType
+import eu.europa.ec.eudi.walletprovider.domain.JwtType
 import eu.europa.ec.eudi.walletprovider.domain.time.Clock
 import eu.europa.ec.eudi.walletprovider.domain.time.toKotlinClock
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.GeneralInformation
@@ -81,7 +81,7 @@ suspend fun Application.configureWalletProviderApplication(config: WalletProvide
             clock = clock,
             length = config.challenge.length,
             validity = config.challenge.validity,
-            signJwt = SignumSignJwt(signer, certificateChain, AttestationType(GenerateChallengeLive.CHALLENGE_JWT_TYPE), json),
+            signJwt = SignumSignJwt(signer, certificateChain, JwtType(GenerateChallengeLive.CHALLENGE_JWT_TYPE), json),
         )
 
     val validateChallenge =
@@ -120,7 +120,7 @@ suspend fun Application.configureWalletProviderApplication(config: WalletProvide
                 SignumSignJwt(
                     signer,
                     certificateChain,
-                    AttestationType(AttestationBasedClientAuthenticationSpec.CLIENT_ATTESTATION_JWT_TYPE),
+                    JwtType(AttestationBasedClientAuthenticationSpec.CLIENT_ATTESTATION_JWT_TYPE),
                     json,
                 ),
         )
