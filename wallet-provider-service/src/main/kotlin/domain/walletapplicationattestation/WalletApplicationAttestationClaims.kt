@@ -18,7 +18,6 @@ package eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation
 import at.asitplus.signum.indispensable.josef.ConfirmationClaim
 import at.asitplus.signum.indispensable.josef.JwsSigned
 import eu.europa.ec.eudi.walletprovider.domain.*
-import eu.europa.ec.eudi.walletprovider.port.output.keyattestation.KeyAttestationValidationFailure
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -81,15 +80,4 @@ value class CertificationInformation(
     }
 
     override fun toString(): String = value.toString()
-}
-
-sealed interface WalletApplicationAttestationGenerationFailure {
-    class InvalidChallenge(
-        val error: NonBlankString,
-        val cause: Throwable? = null,
-    ) : WalletApplicationAttestationGenerationFailure
-
-    class InvalidKeyAttestation(
-        val error: KeyAttestationValidationFailure,
-    ) : WalletApplicationAttestationGenerationFailure
 }

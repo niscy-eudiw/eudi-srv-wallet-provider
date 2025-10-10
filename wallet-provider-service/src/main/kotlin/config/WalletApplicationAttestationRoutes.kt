@@ -16,8 +16,8 @@
 package eu.europa.ec.eudi.walletprovider.config
 
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletApplicationAttestation
-import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletApplicationAttestationGenerationFailure
 import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.GenerateWalletApplicationAttestation
+import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.WalletApplicationAttestationGenerationFailure
 import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.WalletApplicationAttestationRequest
 import eu.europa.ec.eudi.walletprovider.port.output.keyattestation.KeyAttestationValidationFailure
 import io.ktor.http.*

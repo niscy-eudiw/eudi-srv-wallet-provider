@@ -24,13 +24,23 @@ import at.asitplus.signum.indispensable.josef.ConfirmationClaim
 import at.asitplus.signum.indispensable.josef.toJsonWebKey
 import eu.europa.ec.eudi.walletprovider.domain.*
 import eu.europa.ec.eudi.walletprovider.domain.time.Clock
-import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.*
+import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletApplicationAttestation
+import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletApplicationAttestationClaims
+import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletInformation
+import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletName
 import eu.europa.ec.eudi.walletprovider.port.output.challenge.ValidateChallenge
 import eu.europa.ec.eudi.walletprovider.port.output.jose.SignJwt
+import eu.europa.ec.eudi.walletprovider.port.output.keyattestation.KeyAttestationValidationFailure
 import eu.europa.ec.eudi.walletprovider.port.output.keyattestation.ValidateKeyAttestation
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
+
+fun interface GenerateWalletApplicationAttestation {
+    suspend operator fun invoke(
+        request: WalletApplicationAttestationRequest<*>,
+    ): Either<WalletApplicationAttestationGenerationFailure, WalletApplicationAttestation>
+}
 
 sealed interface WalletApplicationAttestationRequest<out KeyAttestation : Attestation> {
     val keyAttestation: KeyAttestation
@@ -52,10 +62,15 @@ sealed interface WalletApplicationAttestationRequest<out KeyAttestation : Attest
     ) : WalletApplicationAttestationRequest<IosHomebrewAttestation>
 }
 
-fun interface GenerateWalletApplicationAttestation {
-    suspend operator fun invoke(
-        request: WalletApplicationAttestationRequest<*>,
-    ): Either<WalletApplicationAttestationGenerationFailure, WalletApplicationAttestation>
+sealed interface WalletApplicationAttestationGenerationFailure {
+    class InvalidChallenge(
+        val error: NonBlankString,
+        val cause: Throwable? = null,
+    ) : WalletApplicationAttestationGenerationFailure
+
+    class InvalidKeyAttestation(
+        val error: KeyAttestationValidationFailure,
+    ) : WalletApplicationAttestationGenerationFailure
 }
 
 @JvmInline
