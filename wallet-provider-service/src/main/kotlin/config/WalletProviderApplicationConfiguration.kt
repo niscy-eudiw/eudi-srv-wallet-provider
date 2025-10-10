@@ -37,9 +37,9 @@ import eu.europa.ec.eudi.walletprovider.domain.time.toKotlinClock
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.GeneralInformation
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletInformation
 import eu.europa.ec.eudi.walletprovider.port.input.challenge.GenerateChallengeLive
-import eu.europa.ec.eudi.walletprovider.port.input.challenge.ValidateChallengeLive
-import eu.europa.ec.eudi.walletprovider.port.input.challenge.ValidateChallengeNoop
 import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.GenerateWalletApplicationAttestationLive
+import eu.europa.ec.eudi.walletprovider.port.output.challenge.ValidateChallengeLive
+import eu.europa.ec.eudi.walletprovider.port.output.challenge.ValidateChallengeNoop
 import io.ktor.http.CacheControl.*
 import io.ktor.http.content.*
 import io.ktor.serialization.kotlinx.json.*

@@ -25,7 +25,7 @@ import at.asitplus.signum.indispensable.josef.toJsonWebKey
 import eu.europa.ec.eudi.walletprovider.domain.*
 import eu.europa.ec.eudi.walletprovider.domain.time.Clock
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.*
-import eu.europa.ec.eudi.walletprovider.port.input.challenge.ValidateChallenge
+import eu.europa.ec.eudi.walletprovider.port.output.challenge.ValidateChallenge
 import eu.europa.ec.eudi.walletprovider.port.output.jose.SignJwt
 import eu.europa.ec.eudi.walletprovider.port.output.keyattestation.ValidateKeyAttestation
 import kotlinx.serialization.Required

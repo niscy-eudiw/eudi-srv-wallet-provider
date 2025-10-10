@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.europa.ec.eudi.walletprovider.port.input.challenge
+package eu.europa.ec.eudi.walletprovider.port.output.challenge
 
 import arrow.core.Either
 import arrow.core.raise.either
@@ -23,6 +23,7 @@ import eu.europa.ec.eudi.walletprovider.domain.Challenge
 import eu.europa.ec.eudi.walletprovider.domain.NonBlankString
 import eu.europa.ec.eudi.walletprovider.domain.RFC7519
 import eu.europa.ec.eudi.walletprovider.domain.toNonBlankString
+import eu.europa.ec.eudi.walletprovider.port.input.challenge.GenerateChallengeLive
 import eu.europa.ec.eudi.walletprovider.port.output.jose.JwtSignatureValidationFailure
 import eu.europa.ec.eudi.walletprovider.port.output.jose.ValidateJwtSignature
 import kotlin.time.Instant
