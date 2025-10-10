@@ -26,8 +26,8 @@ import at.asitplus.signum.indispensable.pki.CertificateChain
 import at.asitplus.signum.indispensable.pki.X509Certificate
 import at.asitplus.signum.supreme.os.JKSProvider
 import at.asitplus.signum.supreme.sign.Signer
-import eu.europa.ec.eudi.walletprovider.adapter.attestationsigning.AttestationSigningService
 import eu.europa.ec.eudi.walletprovider.adapter.jose.SignumSignJwt
+import eu.europa.ec.eudi.walletprovider.adapter.jose.SignumValidateJwtSignature
 import eu.europa.ec.eudi.walletprovider.adapter.warden.WarderAttestationVerificationService
 import eu.europa.ec.eudi.walletprovider.domain.arf.GeneralInformation
 import eu.europa.ec.eudi.walletprovider.domain.attestationsigning.AttestationType
@@ -74,7 +74,6 @@ suspend fun Application.configureWalletProviderApplication(config: WalletProvide
             SigningKeyConfiguration.GenerateRandom -> generateRandomSigner() to null
             is SigningKeyConfiguration.LoadFromKeystore -> loadSignerAndCertificateChainFromKeystore(config)
         }
-    val attestationSigningService = AttestationSigningService(signer, json)
 
     val generateChallenge =
         GenerateChallengeLive(
@@ -91,7 +90,7 @@ suspend fun Application.configureWalletProviderApplication(config: WalletProvide
                 ValidateChallengeNoop
             }
 
-            is AttestationVerificationConfiguration.Enabled -> ValidateChallengeLive(attestationSigningService.validateAttestationSignature)
+            is AttestationVerificationConfiguration.Enabled -> ValidateChallengeLive(SignumValidateJwtSignature(signer, json))
         }
 
     val wardenAttestationService = createWardenAttestationService(config, clock)

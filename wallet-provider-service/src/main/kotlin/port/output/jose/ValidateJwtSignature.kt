@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.europa.ec.eudi.walletprovider.port.output.attestationsigning
+package eu.europa.ec.eudi.walletprovider.port.output.jose
 
 import arrow.core.Either
 import at.asitplus.signum.indispensable.josef.JwsSigned
-import eu.europa.ec.eudi.walletprovider.domain.attestationsigning.AttestationSignatureValidationFailure
-import kotlinx.serialization.DeserializationStrategy
+import eu.europa.ec.eudi.walletprovider.domain.NonBlankString
 
-interface ValidateAttestationSignature {
-    suspend operator fun <T : Any> invoke(
-        unvalidated: String,
-        deserializer: DeserializationStrategy<T>,
-    ): Either<AttestationSignatureValidationFailure, JwsSigned<T>>
+fun interface ValidateJwtSignature<T : Any> {
+    suspend operator fun invoke(unvalidated: String): Either<JwtSignatureValidationFailure, JwsSigned<T>>
+}
+
+sealed interface JwtSignatureValidationFailure {
+    class UnparsableJwt(
+        val error: NonBlankString,
+        val cause: Throwable? = null,
+    ) : JwtSignatureValidationFailure
+
+    class InvalidSignature(
+        val error: NonBlankString,
+        val cause: Throwable? = null,
+    ) : JwtSignatureValidationFailure
 }

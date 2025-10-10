@@ -20,13 +20,13 @@ import arrow.core.raise.either
 import arrow.core.raise.ensure
 import arrow.core.right
 import eu.europa.ec.eudi.walletprovider.domain.RFC7519
-import eu.europa.ec.eudi.walletprovider.domain.attestationsigning.AttestationSignatureValidationFailure
 import eu.europa.ec.eudi.walletprovider.domain.attestationsigning.AttestationType
 import eu.europa.ec.eudi.walletprovider.domain.challenge.Challenge
 import eu.europa.ec.eudi.walletprovider.domain.challenge.ChallengeClaims
 import eu.europa.ec.eudi.walletprovider.domain.challenge.ChallengeVerificationFailure
 import eu.europa.ec.eudi.walletprovider.domain.toNonBlankString
-import eu.europa.ec.eudi.walletprovider.port.output.attestationsigning.ValidateAttestationSignature
+import eu.europa.ec.eudi.walletprovider.port.output.jose.JwtSignatureValidationFailure
+import eu.europa.ec.eudi.walletprovider.port.output.jose.ValidateJwtSignature
 import kotlin.time.Instant
 
 fun interface ValidateChallenge {
@@ -37,24 +37,21 @@ fun interface ValidateChallenge {
 }
 
 class ValidateChallengeLive(
-    private val validateAttestationSignature: ValidateAttestationSignature,
+    private val validateJwtSignature: ValidateJwtSignature<ChallengeClaims>,
 ) : ValidateChallenge {
     override suspend fun invoke(
         challenge: Challenge,
         at: Instant,
     ): Either<ChallengeVerificationFailure, Unit> =
         either {
-            validateAttestationSignature(
-                challenge.value.decodeToString(),
-                ChallengeClaims.serializer(),
-            ).fold(
+            validateJwtSignature(challenge.value.decodeToString()).fold(
                 ifLeft = {
                     val (error, cause) =
                         when (it) {
-                            is AttestationSignatureValidationFailure.InvalidSignature ->
+                            is JwtSignatureValidationFailure.InvalidSignature ->
                                 "Challenge is not valid: ${it.error}".toNonBlankString() to it.cause
 
-                            is AttestationSignatureValidationFailure.UnparsableAttestation ->
+                            is JwtSignatureValidationFailure.UnparsableJwt ->
                                 "Challenge is not valid: ${it.error}".toNonBlankString() to it.cause
                         }
                     raise(ChallengeVerificationFailure(error, cause))
