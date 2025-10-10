@@ -28,7 +28,7 @@ import at.asitplus.signum.supreme.os.JKSProvider
 import at.asitplus.signum.supreme.sign.Signer
 import eu.europa.ec.eudi.walletprovider.adapter.jose.SignumSignJwt
 import eu.europa.ec.eudi.walletprovider.adapter.jose.SignumValidateJwtSignature
-import eu.europa.ec.eudi.walletprovider.adapter.warden.WarderAttestationVerificationService
+import eu.europa.ec.eudi.walletprovider.adapter.keyattestation.WardenValidateKeyAttestation
 import eu.europa.ec.eudi.walletprovider.config.IosAttestationConfiguration.ApplicationConfiguration.IosEnvironment
 import eu.europa.ec.eudi.walletprovider.domain.AttestationBasedClientAuthenticationSpec
 import eu.europa.ec.eudi.walletprovider.domain.JwtType
@@ -95,13 +95,13 @@ suspend fun Application.configureWalletProviderApplication(config: WalletProvide
         }
 
     val wardenAttestationService = createWardenAttestationService(config, clock)
-    val wardenAttestationVerificationService = WarderAttestationVerificationService(wardenAttestationService)
+    val validateKeyAttestation = WardenValidateKeyAttestation(wardenAttestationService)
 
     val generateWalletApplicationAttestation =
         GenerateWalletApplicationAttestationLive(
             clock = clock,
             validateChallenge = validateChallenge,
-            validateKeyAttestation = wardenAttestationVerificationService.validateKeyAttestation,
+            validateKeyAttestation = validateKeyAttestation,
             validity = config.walletApplicationAttestation.validity,
             issuer = config.walletApplicationAttestation.issuer,
             walletName = config.walletApplicationAttestation.walletName,
