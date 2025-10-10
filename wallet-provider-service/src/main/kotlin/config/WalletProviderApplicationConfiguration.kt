@@ -48,6 +48,7 @@ import io.ktor.server.plugins.cachingheaders.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.forwardedheaders.*
 import io.ktor.server.plugins.swagger.*
+import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.*
 import kotlinx.datetime.toDeprecatedClock
 import kotlinx.serialization.json.Json
@@ -145,6 +146,9 @@ private fun Application.configureServerPlugins(json: Json) {
 
     routing {
         swaggerUI(path = "/swagger", swaggerFile = "openapi/openapi.json")
+        get("/") {
+            call.respondRedirect("/swagger")
+        }
     }
 }
 
