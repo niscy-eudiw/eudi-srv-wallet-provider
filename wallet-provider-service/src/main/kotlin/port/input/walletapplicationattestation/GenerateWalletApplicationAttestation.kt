@@ -22,7 +22,9 @@ import at.asitplus.signum.indispensable.Attestation
 import at.asitplus.signum.indispensable.IosHomebrewAttestation
 import at.asitplus.signum.indispensable.josef.ConfirmationClaim
 import at.asitplus.signum.indispensable.josef.toJsonWebKey
-import eu.europa.ec.eudi.walletprovider.domain.*
+import eu.europa.ec.eudi.walletprovider.domain.ClientId
+import eu.europa.ec.eudi.walletprovider.domain.Issuer
+import eu.europa.ec.eudi.walletprovider.domain.StringUrl
 import eu.europa.ec.eudi.walletprovider.domain.attestationsigning.AttestationType
 import eu.europa.ec.eudi.walletprovider.domain.challenge.Challenge
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.*

@@ -15,19 +15,258 @@
  */
 package eu.europa.ec.eudi.walletprovider.config
 
+import at.asitplus.attestation.AttestationService
+import at.asitplus.attestation.IOSAttestationConfiguration
+import at.asitplus.attestation.NoopAttestationService
+import at.asitplus.attestation.Warden
+import at.asitplus.attestation.android.AndroidAttestationConfiguration
+import at.asitplus.signum.indispensable.ECCurve
+import at.asitplus.signum.indispensable.SignatureAlgorithm
+import at.asitplus.signum.indispensable.pki.CertificateChain
+import at.asitplus.signum.indispensable.pki.X509Certificate
+import at.asitplus.signum.supreme.os.JKSProvider
+import at.asitplus.signum.supreme.sign.Signer
+import eu.europa.ec.eudi.walletprovider.adapter.attestationsigning.AttestationSigningService
+import eu.europa.ec.eudi.walletprovider.adapter.warden.WarderAttestationVerificationService
+import eu.europa.ec.eudi.walletprovider.domain.arf.GeneralInformation
+import eu.europa.ec.eudi.walletprovider.domain.ios.IosEnvironment
+import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletInformation
+import eu.europa.ec.eudi.walletprovider.port.input.challenge.GenerateChallengeLive
+import eu.europa.ec.eudi.walletprovider.port.input.challenge.ValidateChallengeLive
+import eu.europa.ec.eudi.walletprovider.port.input.challenge.ValidateChallengeNoop
+import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.GenerateWalletApplicationAttestationLive
+import eu.europa.ec.eudi.walletprovider.time.Clock
+import eu.europa.ec.eudi.walletprovider.time.toKotlinClock
+import io.ktor.http.CacheControl.*
+import io.ktor.http.content.*
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.cachingheaders.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.forwardedheaders.*
+import io.ktor.server.plugins.swagger.*
+import io.ktor.server.routing.*
+import kotlinx.datetime.toDeprecatedClock
+import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption
+import java.security.KeyStore
 
 private val logger = LoggerFactory.getLogger("WalletProviderApplication")
 
 suspend fun Application.configureWalletProviderApplication(config: WalletProviderConfiguration) {
     logger.info("Configuring Wallet Provider Application using: {}", config)
 
-    configureClockModule()
-    configureJsonModule()
-    configureServer()
-    configureChallengeModule(config)
-    configureAttestationSigningModule(config.signingKey)
-    configureWardenAttestationVerificationModule(config.attestationVerification)
-    configureWalletApplicationAttestationModule(config.walletApplicationAttestation)
+    val clock = Clock.System
+    val json =
+        Json {
+            ignoreUnknownKeys = true
+            prettyPrint = true
+        }
+
+    configureServerPlugins(json)
+
+    val attestationSigningService =
+        run {
+            val (signer, certificateChain) =
+                when (val config = config.signingKey) {
+                    SigningKeyConfiguration.GenerateRandom -> generateRandomSigner() to null
+                    is SigningKeyConfiguration.LoadFromKeystore -> loadSignerAndCertificateChainFromKeystore(config)
+                }
+
+            AttestationSigningService(signer, certificateChain, json)
+        }
+
+    val generateChallenge =
+        GenerateChallengeLive(
+            clock = clock,
+            length = config.challenge.length,
+            validity = config.challenge.validity,
+            signAttestation = attestationSigningService.signAttestation,
+        )
+
+    val validateChallenge =
+        when (config.attestationVerification) {
+            AttestationVerificationConfiguration.Disabled -> {
+                logger.warn("Challenge Verification is currently disabled")
+                ValidateChallengeNoop
+            }
+
+            is AttestationVerificationConfiguration.Enabled -> ValidateChallengeLive(attestationSigningService.validateAttestationSignature)
+        }
+
+    val wardenAttestationService = createWardenAttestationService(config, clock)
+    val wardenAttestationVerificationService = WarderAttestationVerificationService(wardenAttestationService)
+
+    val generateWalletApplicationAttestation =
+        GenerateWalletApplicationAttestationLive(
+            clock = clock,
+            validateChallenge = validateChallenge,
+            validateKeyAttestation = wardenAttestationVerificationService.validateKeyAttestation,
+            validity = config.walletApplicationAttestation.validity,
+            issuer = config.walletApplicationAttestation.issuer,
+            walletName = config.walletApplicationAttestation.walletName,
+            walletLink = config.walletApplicationAttestation.walletLink,
+            walletInformation =
+                WalletInformation(
+                    generalInformation =
+                        GeneralInformation(
+                            provider = config.walletApplicationAttestation.walletInformation.provider,
+                            id = config.walletApplicationAttestation.walletInformation.id,
+                            version = config.walletApplicationAttestation.walletInformation.version,
+                            certification = config.walletApplicationAttestation.walletInformation.certification,
+                        ),
+                ),
+            signAttestation = attestationSigningService.signAttestation,
+        )
+
+    configureChallengeRoutes(generateChallenge)
+    configureWalletApplicationAttestationRoutes(generateWalletApplicationAttestation)
 }
+
+private fun Application.configureServerPlugins(json: Json) {
+    install(ContentNegotiation) {
+        json(json)
+    }
+
+    install(CachingHeaders) {
+        options { _, _ ->
+            CachingOptions(NoStore(Visibility.Private))
+        }
+    }
+
+    install(XForwardedHeaders)
+    install(ForwardedHeaders)
+
+    routing {
+        swaggerUI(path = "/swagger", swaggerFile = "openapi/openapi.json")
+    }
+}
+
+private fun generateRandomSigner(): Signer =
+    Signer
+        .Ephemeral {
+            ec {
+                curve = ECCurve.SECP_256_R_1
+            }
+        }.getOrThrow()
+
+private suspend fun loadSignerAndCertificateChainFromKeystore(
+    config: SigningKeyConfiguration.LoadFromKeystore,
+): Pair<Signer, CertificateChain> {
+    val keystore =
+        Files
+            .newInputStream(config.keystoreFile, StandardOpenOption.READ)
+            .use { inputStream ->
+                KeyStore
+                    .getInstance(config.keystoreType.value)
+                    .apply {
+                        load(inputStream, config.keystorePassword?.value?.toCharArray())
+                    }
+            }
+    val keystoreProvider =
+        JKSProvider {
+            withBackingObject {
+                store = keystore
+            }
+        }.getOrThrow()
+    val signer =
+        keystoreProvider
+            .getSignerForKey(config.keyAlias.value) {
+                when (val signatureAlgorithm = config.algorithm) {
+                    is SignatureAlgorithm.ECDSA -> {
+                        ec {
+                            digest = signatureAlgorithm.digest
+                        }
+                    }
+                    is SignatureAlgorithm.RSA -> {
+                        rsa {
+                            digest = signatureAlgorithm.digest
+                            padding = signatureAlgorithm.padding
+                        }
+                    }
+                }
+                privateKeyPassword = config.keyPassword?.value?.toCharArray()
+            }.getOrThrow()
+    val certificateChain: CertificateChain =
+        keystore
+            .getCertificateChain(config.keyAlias.value)
+            .map {
+                X509Certificate.decodeFromDer(it.encoded)
+            }.dropRootCaIfNeeded()
+    return signer to certificateChain
+}
+
+private fun CertificateChain.dropRootCaIfNeeded(): CertificateChain =
+    if (size > 1 && last().isSelfSigned())
+        dropLast(1)
+    else
+        this
+
+private fun X509Certificate.isSelfSigned(): Boolean = tbsCertificate.issuerName == tbsCertificate.subjectName
+
+private fun createWardenAttestationService(
+    config: WalletProviderConfiguration,
+    clock: Clock,
+): AttestationService =
+    when (config.attestationVerification) {
+        AttestationVerificationConfiguration.Disabled -> {
+            logger.warn("Attestation Verification is currently disabled")
+            NoopAttestationService
+        }
+
+        is AttestationVerificationConfiguration.Enabled -> {
+            val androidAttestation: AndroidAttestationConfiguration =
+                with(config.attestationVerification.androidAttestation) {
+                    AndroidAttestationConfiguration(
+                        applications =
+                            applications.map { application ->
+                                AndroidAttestationConfiguration.AppData(
+                                    packageName = application.packageName.value,
+                                    signatureDigests = application.signingCertificateDigests,
+                                )
+                            },
+                        requireStrongBox = strongBoxRequired,
+                        allowBootloaderUnlock = unlockedBootloaderAllowed,
+                        requireRollbackResistance = rollbackResistanceRequired,
+                        ignoreLeafValidity = leafCertificateValidityIgnored,
+                        verificationSecondsOffset = verificationSkew.inWholeSeconds,
+                        attestationStatementValiditySeconds =
+                            when (attestationStatementValidity) {
+                                AttestationStatementValidity.Ignored -> null
+                                is AttestationStatementValidity.Enforced -> attestationStatementValidity.skew.inWholeSeconds
+                            },
+                        disableHardwareAttestation = !hardwareAttestationEnabled,
+                        enableNougatAttestation = nougatAttestationEnabled,
+                        enableSoftwareAttestation = softwareAttestationEnabled,
+                    )
+                }
+
+            val iosAttestation: IOSAttestationConfiguration =
+                with(config.attestationVerification.iosAttestation) {
+                    IOSAttestationConfiguration(
+                        applications =
+                            applications.map { application ->
+                                IOSAttestationConfiguration.AppData(
+                                    teamIdentifier = application.team.value,
+                                    bundleIdentifier = application.bundle.value,
+                                    sandbox =
+                                        when (application.environment) {
+                                            IosEnvironment.Production -> false
+                                            IosEnvironment.Sandbox -> true
+                                        },
+                                )
+                            },
+                        attestationStatementValiditySeconds = attestationStatementValiditySkew.inWholeSeconds,
+                    )
+                }
+
+            Warden(
+                androidAttestationConfiguration = androidAttestation,
+                iosAttestationConfiguration = iosAttestation,
+                clock = clock.toKotlinClock().toDeprecatedClock(),
+                verificationTimeOffset = config.attestationVerification.verificationTimeSkew,
+            )
+        }
+    }

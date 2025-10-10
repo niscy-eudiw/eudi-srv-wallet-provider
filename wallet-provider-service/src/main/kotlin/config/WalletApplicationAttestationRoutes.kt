@@ -15,17 +15,13 @@
  */
 package eu.europa.ec.eudi.walletprovider.config
 
-import eu.europa.ec.eudi.walletprovider.domain.arf.GeneralInformation
 import eu.europa.ec.eudi.walletprovider.domain.keyattestation.KeyAttestationValidationFailure
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletApplicationAttestation
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletApplicationAttestationGenerationFailure
-import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletInformation
 import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.GenerateWalletApplicationAttestation
-import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.GenerateWalletApplicationAttestationLive
 import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.WalletApplicationAttestationRequest
 import io.ktor.http.*
 import io.ktor.server.application.*
-import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -35,41 +31,7 @@ import kotlinx.serialization.Serializable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-fun Application.configureWalletApplicationAttestationModule(config: WalletApplicationAttestationConfiguration) {
-    configureGenerateWalletApplicationAttestation(config)
-    configureWalletApplicationAttestationRoutes()
-}
-
-private fun Application.configureGenerateWalletApplicationAttestation(config: WalletApplicationAttestationConfiguration) {
-    dependencies {
-        provide<GenerateWalletApplicationAttestation> {
-            GenerateWalletApplicationAttestationLive(
-                clock = resolve(),
-                validateChallenge = resolve(),
-                validateKeyAttestation = resolve(),
-                validity = config.validity,
-                issuer = config.issuer,
-                walletName = config.walletName,
-                walletLink = config.walletLink,
-                walletInformation =
-                    WalletInformation(
-                        generalInformation =
-                            GeneralInformation(
-                                provider = config.walletInformation.provider,
-                                id = config.walletInformation.id,
-                                version = config.walletInformation.version,
-                                certification = config.walletInformation.certification,
-                            ),
-                    ),
-                signAttestation = resolve(),
-            )
-        }
-    }
-}
-
-private fun Application.configureWalletApplicationAttestationRoutes() {
-    val generateWalletApplicationAttestation: GenerateWalletApplicationAttestation by dependencies
-
+fun Application.configureWalletApplicationAttestationRoutes(generateWalletApplicationAttestation: GenerateWalletApplicationAttestation) {
     routing {
         route("/wallet-application-attestation") {
             route("/android") {
@@ -90,7 +52,7 @@ private fun Application.configureWalletApplicationAttestationRoutes() {
     }
 }
 
-private val logger = LoggerFactory.getLogger("WalletApplicationAttestationModule")
+private val logger = LoggerFactory.getLogger("WalletApplicationAttestationRoutes")
 
 context(generateWalletApplicationAttestation: GenerateWalletApplicationAttestation)
 private suspend inline fun <reified REQUEST : WalletApplicationAttestationRequest<*>> RoutingCall.generateClientAttestation() {
