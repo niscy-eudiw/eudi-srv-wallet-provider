@@ -36,13 +36,13 @@ import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
-fun interface GenerateWalletApplicationAttestation {
+fun interface IssueWalletApplicationAttestation {
     suspend operator fun invoke(
-        request: WalletApplicationAttestationRequest<*>,
-    ): Either<WalletApplicationAttestationGenerationFailure, WalletApplicationAttestation>
+        request: WalletApplicationAttestationIssuanceRequest<*>,
+    ): Either<WalletApplicationAttestationIssuanceFailure, WalletApplicationAttestation>
 }
 
-sealed interface WalletApplicationAttestationRequest<out KeyAttestation : Attestation> {
+sealed interface WalletApplicationAttestationIssuanceRequest<out KeyAttestation : Attestation> {
     val keyAttestation: KeyAttestation
     val challenge: Challenge
     val clientId: ClientId
@@ -52,25 +52,25 @@ sealed interface WalletApplicationAttestationRequest<out KeyAttestation : Attest
         @Required override val keyAttestation: AndroidKeystoreAttestation,
         @Required override val challenge: Challenge,
         @Required override val clientId: ClientId,
-    ) : WalletApplicationAttestationRequest<AndroidKeystoreAttestation>
+    ) : WalletApplicationAttestationIssuanceRequest<AndroidKeystoreAttestation>
 
     @Serializable
     data class Ios(
         @Required override val keyAttestation: IosHomebrewAttestation,
         @Required override val challenge: Challenge,
         @Required override val clientId: ClientId,
-    ) : WalletApplicationAttestationRequest<IosHomebrewAttestation>
+    ) : WalletApplicationAttestationIssuanceRequest<IosHomebrewAttestation>
 }
 
-sealed interface WalletApplicationAttestationGenerationFailure {
+sealed interface WalletApplicationAttestationIssuanceFailure {
     class InvalidChallenge(
         val error: NonBlankString,
         val cause: Throwable? = null,
-    ) : WalletApplicationAttestationGenerationFailure
+    ) : WalletApplicationAttestationIssuanceFailure
 
     class InvalidKeyAttestation(
         val error: KeyAttestationValidationFailure,
-    ) : WalletApplicationAttestationGenerationFailure
+    ) : WalletApplicationAttestationIssuanceFailure
 }
 
 @JvmInline
@@ -89,7 +89,7 @@ value class WalletApplicationAttestationValidity(
     }
 }
 
-class GenerateWalletApplicationAttestationLive(
+class IssueWalletApplicationAttestationLive(
     private val clock: Clock,
     private val validateChallenge: ValidateChallenge,
     private val validateKeyAttestation: ValidateKeyAttestation,
@@ -99,19 +99,19 @@ class GenerateWalletApplicationAttestationLive(
     private val walletLink: StringUrl?,
     private val walletInformation: WalletInformation,
     private val signJwt: SignJwt<WalletApplicationAttestationClaims>,
-) : GenerateWalletApplicationAttestation {
+) : IssueWalletApplicationAttestation {
     override suspend fun invoke(
-        request: WalletApplicationAttestationRequest<*>,
-    ): Either<WalletApplicationAttestationGenerationFailure, WalletApplicationAttestation> =
+        request: WalletApplicationAttestationIssuanceRequest<*>,
+    ): Either<WalletApplicationAttestationIssuanceFailure, WalletApplicationAttestation> =
         either {
             val now = clock.now()
             validateChallenge(request.challenge, now)
-                .mapLeft { WalletApplicationAttestationGenerationFailure.InvalidChallenge(it.error, it.cause) }
+                .mapLeft { WalletApplicationAttestationIssuanceFailure.InvalidChallenge(it.error, it.cause) }
                 .bind()
 
             val attestedKey =
                 validateKeyAttestation(request.keyAttestation, request.challenge)
-                    .mapLeft { WalletApplicationAttestationGenerationFailure.InvalidKeyAttestation(it) }
+                    .mapLeft { WalletApplicationAttestationIssuanceFailure.InvalidKeyAttestation(it) }
                     .bind()
                     .publicKey
 

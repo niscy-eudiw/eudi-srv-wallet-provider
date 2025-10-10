@@ -37,7 +37,7 @@ import eu.europa.ec.eudi.walletprovider.domain.time.toKotlinClock
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.GeneralInformation
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletInformation
 import eu.europa.ec.eudi.walletprovider.port.input.challenge.GenerateChallengeLive
-import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.GenerateWalletApplicationAttestationLive
+import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.IssueWalletApplicationAttestationLive
 import eu.europa.ec.eudi.walletprovider.port.output.challenge.ValidateChallengeLive
 import eu.europa.ec.eudi.walletprovider.port.output.challenge.ValidateChallengeNoop
 import io.ktor.http.CacheControl.*
@@ -97,8 +97,8 @@ suspend fun Application.configureWalletProviderApplication(config: WalletProvide
     val wardenAttestationService = createWardenAttestationService(config, clock)
     val validateKeyAttestation = WardenValidateKeyAttestation(wardenAttestationService)
 
-    val generateWalletApplicationAttestation =
-        GenerateWalletApplicationAttestationLive(
+    val issueWalletApplicationAttestation =
+        IssueWalletApplicationAttestationLive(
             clock = clock,
             validateChallenge = validateChallenge,
             validateKeyAttestation = validateKeyAttestation,
@@ -126,7 +126,7 @@ suspend fun Application.configureWalletProviderApplication(config: WalletProvide
         )
 
     configureChallengeRoutes(generateChallenge)
-    configureWalletApplicationAttestationRoutes(generateWalletApplicationAttestation)
+    configureWalletApplicationAttestationRoutes(issueWalletApplicationAttestation)
 }
 
 private fun Application.configureServerPlugins(json: Json) {

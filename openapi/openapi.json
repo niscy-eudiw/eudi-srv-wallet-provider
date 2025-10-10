@@ -34,12 +34,12 @@
         "tags": [
           "wallet-application-attestation"
         ],
-        "operationId": "generateAndroidWalletApplicationAttestation",
+        "operationId": "issueAndroidWalletApplicationAttestation",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AndroidWalletApplicationAttestationRequest"
+                "$ref": "#/components/schemas/AndroidWalletApplicationAttestationIssuanceRequest"
               }
             }
           },
@@ -77,12 +77,12 @@
         "tags": [
           "wallet-application-attestation"
         ],
-        "operationId": "generateIosWalletApplicationAttestation",
+        "operationId": "issueIosWalletApplicationAttestation",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/IosWalletApplicationAttestationRequest"
+                "$ref": "#/components/schemas/IosWalletApplicationAttestationIssuanceRequest"
               }
             }
           },
@@ -161,7 +161,7 @@
       "ClientId": {
         "type": "string"
       },
-      "AndroidWalletApplicationAttestationRequest": {
+      "AndroidWalletApplicationAttestationIssuanceRequest": {
         "type": "object",
         "properties": {
           "keyAttestation": {
@@ -199,7 +199,7 @@
         ],
         "additionalProperties": false
       },
-      "IosWalletApplicationAttestationRequest": {
+      "IosWalletApplicationAttestationIssuanceRequest": {
         "type": "object",
         "properties": {
           "keyAttestation": {

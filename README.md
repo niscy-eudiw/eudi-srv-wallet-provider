@@ -57,7 +57,7 @@ To get a Wallet Application Attestation:
    1. Validates the single-use Challenge
    2. Validates the Key Attestation
    3. Verifies the Key Attestation contains the single-use Challenge
-   4. Generates a key-bound Wallet Application Attestation
+   4. Issues a key-bound Wallet Application Attestation
 
 ```mermaid
 sequenceDiagram    
@@ -71,13 +71,13 @@ sequenceDiagram
     
     W->>+W: Generate new Key-Pair and Key Attestation (with single-use Challenge)
     
-    W->>+WP: Request Wallet Application Attestation
+    W->>+WP: Request Wallet Application Attestation Issuance
     
     WP->>+WP: Validate Challenge
     WP->>+WP: Validate Key Attestation
-    WP->>+WP: Generate Wallet Application Attestation
+    WP->>+WP: Issue Wallet Application Attestation
     
-    WP->>+W: Provide Wallet Application Attestation
+    WP->>+W: Provide issued Wallet Application Attestation
 ```
 
 ## Technical Details

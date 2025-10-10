@@ -16,9 +16,9 @@
 package eu.europa.ec.eudi.walletprovider.config
 
 import eu.europa.ec.eudi.walletprovider.domain.walletapplicationattestation.WalletApplicationAttestation
-import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.GenerateWalletApplicationAttestation
-import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.WalletApplicationAttestationGenerationFailure
-import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.WalletApplicationAttestationRequest
+import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.IssueWalletApplicationAttestation
+import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.WalletApplicationAttestationIssuanceFailure
+import eu.europa.ec.eudi.walletprovider.port.input.walletapplicationattestation.WalletApplicationAttestationIssuanceRequest
 import eu.europa.ec.eudi.walletprovider.port.output.keyattestation.KeyAttestationValidationFailure
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -31,20 +31,20 @@ import kotlinx.serialization.Serializable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-fun Application.configureWalletApplicationAttestationRoutes(generateWalletApplicationAttestation: GenerateWalletApplicationAttestation) {
+fun Application.configureWalletApplicationAttestationRoutes(issueWalletApplicationAttestation: IssueWalletApplicationAttestation) {
     routing {
         route("/wallet-application-attestation") {
             route("/android") {
                 post {
-                    context(generateWalletApplicationAttestation) {
-                        call.generateClientAttestation<WalletApplicationAttestationRequest.Android>()
+                    context(issueWalletApplicationAttestation) {
+                        call.issueWalletApplicationAttestation<WalletApplicationAttestationIssuanceRequest.Android>()
                     }
                 }
             }
             route("/ios") {
                 post {
-                    context(generateWalletApplicationAttestation) {
-                        call.generateClientAttestation<WalletApplicationAttestationRequest.Ios>()
+                    context(issueWalletApplicationAttestation) {
+                        call.issueWalletApplicationAttestation<WalletApplicationAttestationIssuanceRequest.Ios>()
                     }
                 }
             }
@@ -54,15 +54,15 @@ fun Application.configureWalletApplicationAttestationRoutes(generateWalletApplic
 
 private val logger = LoggerFactory.getLogger("WalletApplicationAttestationRoutes")
 
-context(generateWalletApplicationAttestation: GenerateWalletApplicationAttestation)
-private suspend inline fun <reified REQUEST : WalletApplicationAttestationRequest<*>> RoutingCall.generateClientAttestation() {
+context(issueWalletApplicationAttestation: IssueWalletApplicationAttestation)
+private suspend inline fun <reified REQUEST : WalletApplicationAttestationIssuanceRequest<*>> RoutingCall.issueWalletApplicationAttestation() {
     val request = receive<REQUEST>()
-    logger.info("Received WalletApplicationAttestationRequest: {}", request)
+    logger.info("Received WalletApplicationAttestationIssuanceRequest: {}", request)
 
-    generateWalletApplicationAttestation(request)
+    issueWalletApplicationAttestation(request)
         .fold(
             ifRight = { walletApplicationAttestation ->
-                logger.info("Successfully generated WalletApplicationAttestation: {}", walletApplicationAttestation)
+                logger.info("Successfully issued WalletApplicationAttestation: {}", walletApplicationAttestation)
                 respond(HttpStatusCode.OK, walletApplicationAttestation.toWalletApplicationAttestationResponse())
             },
             ifLeft = { failure ->
@@ -75,23 +75,23 @@ private suspend inline fun <reified REQUEST : WalletApplicationAttestationReques
 }
 
 context(logger: Logger)
-private fun WalletApplicationAttestationGenerationFailure.log() {
+private fun WalletApplicationAttestationIssuanceFailure.log() {
     val (error, cause) =
         when (this) {
-            is WalletApplicationAttestationGenerationFailure.InvalidChallenge ->
-                "WalletApplicationAttestationRequest verification failed, " +
+            is WalletApplicationAttestationIssuanceFailure.InvalidChallenge ->
+                "WalletApplicationAttestationIssuanceRequest verification failed, " +
                     "Challenge is not valid: $error" to
                     cause
 
-            is WalletApplicationAttestationGenerationFailure.InvalidKeyAttestation -> {
+            is WalletApplicationAttestationIssuanceFailure.InvalidKeyAttestation -> {
                 when (val keyAttestationFailure = error) {
                     is KeyAttestationValidationFailure.InvalidKeyAttestation ->
-                        "WalletApplicationAttestationRequest verification failed, " +
+                        "WalletApplicationAttestationIssuanceRequest verification failed, " +
                             "Key Attestation is not valid: ${keyAttestationFailure.error}" to
                             keyAttestationFailure.cause
 
                     is KeyAttestationValidationFailure.UnsupportedAttestedKey ->
-                        "WalletApplicationAttestationRequest verification failed, " +
+                        "WalletApplicationAttestationIssuanceRequest verification failed, " +
                             "Key Attestation contains an unsupported PublicKey: ${keyAttestationFailure.error}" to
                             keyAttestationFailure.cause
                 }
@@ -108,8 +108,7 @@ private data class WalletApplicationAttestationResponse(
     constructor(walletApplicationAttestation: WalletApplicationAttestation) : this(walletApplicationAttestation.serialize())
 }
 
-private fun WalletApplicationAttestation.toWalletApplicationAttestationResponse(): WalletApplicationAttestationResponse =
-    WalletApplicationAttestationResponse(this)
+private fun WalletApplicationAttestation.toWalletApplicationAttestationResponse(): WalletApplicationAttestationResponse = WalletApplicationAttestationResponse(this)
 
 @Serializable
 private enum class WalletApplicationAttestationError {
@@ -128,11 +127,10 @@ private data class WalletApplicationAttestationErrorResponse(
     @Required val error: WalletApplicationAttestationError,
 )
 
-private fun WalletApplicationAttestationGenerationFailure.toWalletApplicationAttestationErrorResponse():
-    WalletApplicationAttestationErrorResponse =
+private fun WalletApplicationAttestationIssuanceFailure.toWalletApplicationAttestationErrorResponse(): WalletApplicationAttestationErrorResponse =
     when (this) {
-        is WalletApplicationAttestationGenerationFailure.InvalidChallenge -> WalletApplicationAttestationError.InvalidChallenge
-        is WalletApplicationAttestationGenerationFailure.InvalidKeyAttestation ->
+        is WalletApplicationAttestationIssuanceFailure.InvalidChallenge -> WalletApplicationAttestationError.InvalidChallenge
+        is WalletApplicationAttestationIssuanceFailure.InvalidKeyAttestation ->
             when (error) {
                 is KeyAttestationValidationFailure.InvalidKeyAttestation -> WalletApplicationAttestationError.InvalidKeyAttestation
                 is KeyAttestationValidationFailure.UnsupportedAttestedKey -> WalletApplicationAttestationError.UnsupportedAttestedKey
