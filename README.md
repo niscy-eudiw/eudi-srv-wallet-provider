@@ -19,10 +19,17 @@ the [EUDI Wallet Reference Implementation project description](https://github.co
 An implementation of a Wallet Provider service according to [OpenId4VCI 1.0](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html), 
 and [EUDI Wallet Standards and Technical Specifications](https://github.com/eu-digital-identity-wallet/eudi-doc-standards-and-technical-specifications).
 
+> [!IMPORTANT]  
+> Wallet Provider is created strictly for testing and development purposes.   
+> By default, Wallet Provider acts as a **_MOCK_** Wallet Provider service, performing **_NO_** validations of Key Attestations provided by Wallets, 
+> issuing Attestations with **_NO_** further checks.    
+> Wallet Provider can be **_OPTIONALLY_** configured to perform validations of Key Attestations provided by Wallets, using the 
+> [Warden Server-Side Mobile Client Attestation Library](https://github.com/a-sit-plus/warden).
+
 ## Disclaimer
 
-> [!CAUTION]
-> Wallet Provider is created strictly for testing and development purposes. It is **NOT** production-grade.
+> [!CAUTION]  
+> Wallet Provider is created strictly for testing and development purposes. It is **_NOT_** production-grade.  
 > Wallet Provider is provided on an as-is basis, without warranties or conditions of any kind, either express or implied.
 
 The released software is an initial development release version:
@@ -48,9 +55,9 @@ Currently, the service supports issuance of key-bound Wallet Application Attesta
 
 ### Issuance of key-bound Wallet Application Attestation
 
-To get a Wallet Application Attestation:
+To issue a Wallet Application Attestation:
 
-1. The Wallet gets a single-use Challenge from the Wallet Provider
+1. The Wallet requests a single-use Challenge from the Wallet Provider
 2. The Wallet generates a new Key-Pair and Key Attestation which contains the single-use Challenge provided by the Wallet Provider
 3. The Wallet requests a key-bound Wallet Application Attestation from the Wallet Provider
 4. The Wallet Provider:
@@ -82,7 +89,7 @@ sequenceDiagram
 
 ## Technical Details
 
-Wallet Provider uses the [Warden Server-Side Mobile Client Attestation Library](https://github.com/a-sit-plus/warden) for verifying Key Attestations.
+Wallet Provider uses the [Warden Server-Side Mobile Client Attestation Library](https://github.com/a-sit-plus/warden) for validating Key Attestations.
 Android Wallets must use the [Certification Chain provided by the Android Keystore](https://developer.android.com/privacy-and-security/security-key-attestation).
 iOS Wallets must use the [Supreme Attestation Format](https://github.com/a-sit-plus/warden?tab=readme-ov-file#ios) which is based on [Apple's App Attest Service](https://developer.apple.com/documentation/devicecheck/establishing-your-app-s-integrity).
 
@@ -97,7 +104,7 @@ Wallet Provider can be deployed using Docker or any other OCI compliant containe
 
 ### Configuration
 
-Wallet Provider can be configured using the environment variables:
+Wallet Provider can be configured using the following environment variables:
 
 #### Server configuration
 
@@ -157,87 +164,87 @@ Allowed values:
 * `RSAwithSHA384andPSSPadding`
 * `RSAwithSHA512andPSSPadding`
 
-#### Key Attestation Verification Configuration
+#### Key Attestation Validation Configuration
 
-By default, Wallet Provider performs no Key Attestation verification.
+By default, Wallet Provider performs no validation of Key Attestations.
 
-To enable Key Attestation verification, use the following environment variables:
+To enable Key Attestation validation, use the following environment variables:
 
-> [!NOTE]
+> [!NOTE]  
 > Due to limitations of the [Warden Server-Side Mobile Client Attestation Library](https://github.com/a-sit-plus/warden), when enabling Key Attestation
-verification, you must configure both Android and iOS Key Attestation verification.
+validation, you must configure both Android and iOS Key Attestation validation.
 
 #### Android Key Attestations
 
-Variable: `KEYATTESTATIONVERIFICATION_ANDROID_APPLICATIONS_XX_PACKAGENAME`   
+Variable: `KEYATTESTATIONVALIDATION_ANDROID_APPLICATIONS_XX_PACKAGENAME`   
 Description: Android Package of the Wallet.  
 Default value: N/A  
 
-Variable: `KEYATTESTATIONVERIFICATION_ANDROID_APPLICATIONS_XX_SIGNINGCERTIFICATEDIGESTS_XX`   
+Variable: `KEYATTESTATIONVALIDATION_ANDROID_APPLICATIONS_XX_SIGNINGCERTIFICATEDIGESTS_XX`   
 Description: Base64 Url-Safe encoded DER encoding of the X509 Certificate used to sign the Wallet.  
 Default value: N/A  
 
-Variable: `KEYATTESTATIONVERIFICATION_ANDROID_STRONGBOXREQUIRED`   
+Variable: `KEYATTESTATIONVALIDATION_ANDROID_STRONGBOXREQUIRED`   
 Description: Whether StrongBox security leve is required.  
 Default value: `false`  
 
-Variable: `KEYATTESTATIONVERIFICATION_ANDROID_UNLOCKEDBOOTLOADERALLOWED`  
+Variable: `KEYATTESTATIONVALIDATION_ANDROID_UNLOCKEDBOOTLOADERALLOWED`  
 Description: Whether devices with unlocked bootloaders are allowed.  
 Default value: `false`  
 
-Variable: `KEYATTESTATIONVERIFICATION_ANDROID_ROLLBACKRESISTANCEREQUIRED`  
+Variable: `KEYATTESTATIONVALIDATION_ANDROID_ROLLBACKRESISTANCEREQUIRED`  
 Description: Whether rollback resistance is required.  
 Default value: `false`  
 
-Variable: `KEYATTESTATIONVERIFICATION_ANDROID_LEAFCERTIFICATEVALIDITYIGNORED`  
+Variable: `KEYATTESTATIONVALIDATION_ANDROID_LEAFCERTIFICATEVALIDITYIGNORED`  
 Description: Whether the validity of the leaf certificate is ignored.  
 Default value: `false`  
 
-Variable: `KEYATTESTATIONVERIFICATION_ANDROID_VERIFICATIONSKEW`  
+Variable: `KEYATTESTATIONVALIDATION_ANDROID_VERIFICATIONSKEW`  
 Description: Tolerance added to the verification date.  
 Default value: `0 seconds`  
 
-Variable: `KEYATTESTATIONVERIFICATION_ANDROID_HARDWAREATTESTATIONENABLED`  
+Variable: `KEYATTESTATIONVALIDATION_ANDROID_HARDWAREATTESTATIONENABLED`  
 Description: Whether **hardware** Key Attestations are accepted.  
 Default value: `true`  
 
-Variable: `KEYATTESTATIONVERIFICATION_ANDROID_NOUGATATTESTATIONENABLED`  
+Variable: `KEYATTESTATIONVALIDATION_ANDROID_NOUGATATTESTATIONENABLED`  
 Description: Whether Key Attestations generated on Devices with **Android Nougat** are accepted.  
 Default value: `false`  
 
-Variable: `KEYATTESTATIONVERIFICATION_ANDROID_SOFTWAREATTESTATIONENABLED`  
+Variable: `KEYATTESTATIONVALIDATION_ANDROID_SOFTWAREATTESTATIONENABLED`  
 Description: Whether **software** Key Attestations are accepted.  
 Default value: `false`  
 
 **Validity of Key Attestation**
 
-By default, Wallet Provider verifies the creation time of the Key Attestation using a default skew of `5 minutes`. You can modify the `skew` using
+By default, Wallet Provider validates the creation time of the Key Attestation using a default skew of `5 minutes`. You can modify the `skew` using
 the following environment variable:
 
-Variable: `KEYATTESTATIONVERIFICATION_ANDROID_ATTESTATIONSTATEMENTVALIDITY_SKEW`  
+Variable: `KEYATTESTATIONVALIDATION_ANDROID_ATTESTATIONSTATEMENTVALIDITY_SKEW`  
 Description: How far in the past, the creation date of a Key Attestation can be.  
 Default value: `5 minutes`  
 
-To disable this check, set the environment variable `KEYATTESTATIONVERIFICATION_ANDROID_ATTESTATIONSTATEMENTVALIDITY` to `Disabled`.
+To disable this check, set the environment variable `KEYATTESTATIONVALIDATION_ANDROID_ATTESTATIONSTATEMENTVALIDITY` to `Disabled`.
 
 ##### iOS Key Attestations
 
-Variable: `KEYATTESTATIONVERIFICATION_IOS_APPLICATIONS_XX_TEAMIDENTIFIER`   
+Variable: `KEYATTESTATIONVALIDATION_IOS_APPLICATIONS_XX_TEAMIDENTIFIER`   
 Description: The Team Identifier of the Wallet.  
 Default value: `N/A`  
 
-Variable: `KEYATTESTATIONVERIFICATION_IOS_APPLICATIONS_XX_BUNDLEIDENTIFIER`   
+Variable: `KEYATTESTATIONVALIDATION_IOS_APPLICATIONS_XX_BUNDLEIDENTIFIER`   
 Description: The Bundle Identifier of the Wallet.  
 Default value: `N/A`  
 
-Variable: `KEYATTESTATIONVERIFICATION_IOS_APPLICATIONS_XX_ENVIRONMENT`    
+Variable: `KEYATTESTATIONVALIDATION_IOS_APPLICATIONS_XX_ENVIRONMENT`    
 Description: Environment in which the Wallet is running.  
 Default value: `Production`   
 Allowed values:
 * `Production`
 * `Sandbox`
 
-Variable: `KEYATTESTATIONVERIFICATION_IOS_ATTESTATIONSTATEMENTVALIDITY_SKEW`  
+Variable: `KEYATTESTATIONVALIDATION_IOS_ATTESTATIONSTATEMENTVALIDITY_SKEW`  
 Description: How far in the past, the creation date of a Key Attestation can be.  
 Default value: `5 minutes`  
 
