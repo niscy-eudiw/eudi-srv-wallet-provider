@@ -352,7 +352,7 @@ Default value: `5 minutes`
 
 ### Issuer Configuration
 
-Variable: `WALLETAPPLICATIONATTESTATION_ISSUER`  
+Variable: `ISSUER`  
 Description: Issuer of the Attestations.  
 Default value: `eudi-srv-wallet-provider`
 
