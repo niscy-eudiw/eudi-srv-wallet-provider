@@ -50,10 +50,20 @@ any of the open-sourced components is suitable for use in that application.
 
 ## Features
 
-Currently, the service supports issuance of key-bound Wallet Application Attestations according to 
-[Specification of Wallet Unit Attestations (WUA) used in issuance of PID and Attestations](https://github.com/eu-digital-identity-wallet/eudi-doc-standards-and-technical-specifications/blob/main/docs/technical-specifications/ts3-wallet-unit-attestation.md).
+The service supports issuance of:
+
+1. Key-bound Wallet Application Attestations
+2. Wallet Unit Attestations
+
+per [Specification of Wallet Unit Attestations (WUA) used in issuance of PID and Attestations](https://github.com/eu-digital-identity-wallet/eudi-doc-standards-and-technical-specifications/blob/main/docs/technical-specifications/ts3-wallet-unit-attestation.md).
+
+The following deviations apply:
+
+1. Wallet Unit Attestations do not use any revocation mechanism
 
 ### Issuance of key-bound Wallet Application Attestation
+
+#### Issuance using platform Key Attestation
 
 To issue a Wallet Application Attestation:
 
@@ -85,6 +95,42 @@ sequenceDiagram
     WP->>+WP: Issue Wallet Application Attestation
     
     WP->>+W: Provide issued Wallet Application Attestation
+```
+
+### Issuance of Wallet Unit Attestation
+
+#### Issuance using platform Key Attestations
+
+To issue a Wallet Unit Attestation:
+
+1. The Wallet requests a single-use Challenge from the Wallet Provider
+2. The Wallet generates new Key-Pairs and Key Attestations which contain the single-use Challenge provided by the Wallet Provider
+3. The Wallet requests a Wallet Unit Attestation from the Wallet Provider
+4. The Wallet Provider:
+    1. Validates the single-use Challenge
+    2. Validates the Key Attestations
+    3. Verifies the Key Attestations contains the single-use Challenge
+    4. Issues Wallet Unit Attestation
+
+```mermaid
+sequenceDiagram    
+    participant W as Wallet
+    participant WP as Wallet Provider
+    
+    
+    W->>+WP: Request single-use Challenge
+    WP->>+WP: Generate single-use Challenge
+    WP->>+W: Provide single-use Challenge
+    
+    W->>+W: Generate new Key-Pairs and Key Attestations (with single-use Challenge)
+    
+    W->>+WP: Request Wallet Unit Attestation Issuance
+    
+    WP->>+WP: Validate Challenge
+    WP->>+WP: Validate Key Attestations
+    WP->>+WP: Issue Wallet Unit Attestation
+    
+    WP->>+W: Provide issued Wallet Unit Attestation
 ```
 
 ## Technical Details
