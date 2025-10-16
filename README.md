@@ -21,9 +21,9 @@ and [EUDI Wallet Standards and Technical Specifications](https://github.com/eu-d
 
 > [!IMPORTANT]  
 > Wallet Provider is created strictly for testing and development purposes.   
-> By default, Wallet Provider acts as a **_MOCK_** Wallet Provider service, performing **_NO_** validations of Key Attestations provided by Wallets, 
-> issuing Attestations with **_NO_** further checks.    
-> Wallet Provider can be **_OPTIONALLY_** configured to perform validations of Key Attestations provided by Wallets, using the 
+> By default, Wallet Provider acts as a **_MOCK_** Wallet Provider service, performing **_NO_** validations of platform Key Attestations 
+> provided by Wallets, issuing Attestations with **_NO_** further checks.    
+> Wallet Provider can be **_OPTIONALLY_** configured to perform validations of platform Key Attestations provided by Wallets, using the 
 > [Warden Server-Side Mobile Client Attestation Library](https://github.com/a-sit-plus/warden).
 
 ## Disclaimer
@@ -68,12 +68,12 @@ The following deviations apply:
 To issue a Wallet Application Attestation:
 
 1. The Wallet requests a single-use Challenge from the Wallet Provider
-2. The Wallet generates a new Key-Pair and Key Attestation which contains the single-use Challenge provided by the Wallet Provider
+2. The Wallet generates a new Key-Pair and platform Key Attestation which contains the single-use Challenge provided by the Wallet Provider
 3. The Wallet requests a key-bound Wallet Application Attestation from the Wallet Provider
 4. The Wallet Provider:
    1. Validates the single-use Challenge
-   2. Validates the Key Attestation
-   3. Verifies the Key Attestation contains the single-use Challenge
+   2. Validates the platform Key Attestation
+   3. Verifies the platform Key Attestation contains the single-use Challenge
    4. Issues a key-bound Wallet Application Attestation
 
 ```mermaid
@@ -86,14 +86,37 @@ sequenceDiagram
     WP->>+WP: Generate single-use Challenge
     WP->>+W: Provide single-use Challenge
     
-    W->>+W: Generate new Key-Pair and Key Attestation (with single-use Challenge)
+    W->>+W: Generate new Key-Pair and platform Key Attestation (with single-use Challenge)
     
     W->>+WP: Request Wallet Application Attestation Issuance
     
     WP->>+WP: Validate Challenge
-    WP->>+WP: Validate Key Attestation
+    WP->>+WP: Validate platform Key Attestation
     WP->>+WP: Issue Wallet Application Attestation
     
+    WP->>+W: Provide issued Wallet Application Attestation
+```
+
+#### Issuance using Json Web Key
+
+> [!CAUTION]  
+> When using a Json Web Key, Wallet Provider performs **NO** validations and simply issues a key-bound Wallet Application Attestation 
+> using the provided Json Web Key.  
+
+To issue a Wallet Application Attestation:
+
+1. The Wallet generates a new Key-Pair
+2. The Wallet requests a key-bound Wallet Application Attestation from the Wallet Provider
+3. The Wallet Provider issues a key-bound Wallet Application Attestation
+
+```mermaid
+sequenceDiagram    
+    participant W as Wallet
+    participant WP as Wallet Provider
+    
+    W->>+W: Generate new Key-Pair
+    W->>+WP: Request Wallet Application Attestation Issuance
+    WP->>+WP: Issue Wallet Application Attestation
     WP->>+W: Provide issued Wallet Application Attestation
 ```
 
@@ -104,12 +127,12 @@ sequenceDiagram
 To issue a Wallet Unit Attestation:
 
 1. The Wallet requests a single-use Challenge from the Wallet Provider
-2. The Wallet generates new Key-Pairs and Key Attestations which contain the single-use Challenge provided by the Wallet Provider
+2. The Wallet generates new Key-Pairs and platform Key Attestations which contain the single-use Challenge provided by the Wallet Provider
 3. The Wallet requests a Wallet Unit Attestation from the Wallet Provider
 4. The Wallet Provider:
     1. Validates the single-use Challenge
-    2. Validates the Key Attestations
-    3. Verifies the Key Attestations contains the single-use Challenge
+    2. Validates the platform Key Attestations
+    3. Verifies the platform Key Attestations contain the single-use Challenge
     4. Issues Wallet Unit Attestation
 
 ```mermaid
@@ -122,20 +145,43 @@ sequenceDiagram
     WP->>+WP: Generate single-use Challenge
     WP->>+W: Provide single-use Challenge
     
-    W->>+W: Generate new Key-Pairs and Key Attestations (with single-use Challenge)
+    W->>+W: Generate new Key-Pairs and platform Key Attestations (with single-use Challenge)
     
     W->>+WP: Request Wallet Unit Attestation Issuance
     
     WP->>+WP: Validate Challenge
-    WP->>+WP: Validate Key Attestations
+    WP->>+WP: Validate platform Key Attestations
     WP->>+WP: Issue Wallet Unit Attestation
     
     WP->>+W: Provide issued Wallet Unit Attestation
 ```
 
+#### Issuance using Json Web Key Set
+
+> [!CAUTION]  
+> When using a Json Web Key Set, Wallet Provider performs **NO** validations and simply issues a Wallet Unit Attestation
+> using the provided Json Web Key Set.
+
+To issue a Wallet Unit Attestation:
+
+1. The Wallet generates new Key-Pairs
+2. The Wallet requests a Wallet Unit Attestation from the Wallet Provider
+3. The Wallet Provider issues a Wallet Unit Attestation
+
+```mermaid
+sequenceDiagram    
+    participant W as Wallet
+    participant WP as Wallet Provider
+    
+    W->>+W: Generate new Key-Pairs
+    W->>+WP: Request Wallet Unit Attestation Issuance
+    WP->>+WP: Issue Wallet Unit Attestation
+    WP->>+W: Provide issued Wallet Unit Attestation
+```
+
 ## Technical Details
 
-Wallet Provider uses the [Warden Server-Side Mobile Client Attestation Library](https://github.com/a-sit-plus/warden) for validating Key Attestations.
+Wallet Provider uses the [Warden Server-Side Mobile Client Attestation Library](https://github.com/a-sit-plus/warden) for validating platform Key Attestations.
 Android Wallets must use the [Certification Chain provided by the Android Keystore](https://developer.android.com/privacy-and-security/security-key-attestation).
 iOS Wallets must use the [Supreme Attestation Format](https://github.com/a-sit-plus/warden?tab=readme-ov-file#ios) which is based on [Apple's App Attest Service](https://developer.apple.com/documentation/devicecheck/establishing-your-app-s-integrity).
 
@@ -210,11 +256,11 @@ Allowed values:
 * `RSAwithSHA384andPSSPadding`
 * `RSAwithSHA512andPSSPadding`
 
-#### Key Attestation Validation Configuration
+#### Platform Key Attestation Validation Configuration
 
-By default, Wallet Provider performs no validation of Key Attestations.
+By default, Wallet Provider performs no validation of platform Key Attestations.
 
-To enable Key Attestation validation, use the following environment variables:
+To enable platform Key Attestation validation, use the following environment variables:
 
 > [!NOTE]  
 > Due to limitations of the [Warden Server-Side Mobile Client Attestation Library](https://github.com/a-sit-plus/warden), when enabling Key Attestation
@@ -222,43 +268,43 @@ validation, you must configure both Android and iOS Key Attestation validation.
 
 #### Android Key Attestations
 
-Variable: `KEYATTESTATIONVALIDATION_ANDROID_APPLICATIONS_XX_PACKAGENAME`   
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_APPLICATIONS_XX_PACKAGENAME`   
 Description: Android Package of the Wallet.  
 Default value: N/A  
 
-Variable: `KEYATTESTATIONVALIDATION_ANDROID_APPLICATIONS_XX_SIGNINGCERTIFICATEDIGESTS_XX`   
-Description: Base64 Url-Safe encoded DER encoding of the X509 Certificate used to sign the Wallet.  
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_APPLICATIONS_XX_SIGNINGCERTIFICATEDIGESTS_XX`   
+Description: Base64 Url-Safe encoded DER encoding of the X509 Certificate used to sign the Wallet application.  
 Default value: N/A  
 
-Variable: `KEYATTESTATIONVALIDATION_ANDROID_STRONGBOXREQUIRED`   
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_STRONGBOXREQUIRED`   
 Description: Whether StrongBox security leve is required.  
 Default value: `false`  
 
-Variable: `KEYATTESTATIONVALIDATION_ANDROID_UNLOCKEDBOOTLOADERALLOWED`  
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_UNLOCKEDBOOTLOADERALLOWED`  
 Description: Whether devices with unlocked bootloaders are allowed.  
 Default value: `false`  
 
-Variable: `KEYATTESTATIONVALIDATION_ANDROID_ROLLBACKRESISTANCEREQUIRED`  
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_ROLLBACKRESISTANCEREQUIRED`  
 Description: Whether rollback resistance is required.  
 Default value: `false`  
 
-Variable: `KEYATTESTATIONVALIDATION_ANDROID_LEAFCERTIFICATEVALIDITYIGNORED`  
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_LEAFCERTIFICATEVALIDITYIGNORED`  
 Description: Whether the validity of the leaf certificate is ignored.  
 Default value: `false`  
 
-Variable: `KEYATTESTATIONVALIDATION_ANDROID_VERIFICATIONSKEW`  
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_VERIFICATIONSKEW`  
 Description: Tolerance added to the verification date.  
 Default value: `0 seconds`  
 
-Variable: `KEYATTESTATIONVALIDATION_ANDROID_HARDWAREATTESTATIONENABLED`  
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_HARDWAREATTESTATIONENABLED`  
 Description: Whether **hardware** Key Attestations are accepted.  
 Default value: `true`  
 
-Variable: `KEYATTESTATIONVALIDATION_ANDROID_NOUGATATTESTATIONENABLED`  
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_NOUGATATTESTATIONENABLED`  
 Description: Whether Key Attestations generated on Devices with **Android Nougat** are accepted.  
 Default value: `false`  
 
-Variable: `KEYATTESTATIONVALIDATION_ANDROID_SOFTWAREATTESTATIONENABLED`  
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_SOFTWAREATTESTATIONENABLED`  
 Description: Whether **software** Key Attestations are accepted.  
 Default value: `false`  
 
@@ -267,30 +313,30 @@ Default value: `false`
 By default, Wallet Provider validates the creation time of the Key Attestation using a default skew of `5 minutes`. You can modify the `skew` using
 the following environment variable:
 
-Variable: `KEYATTESTATIONVALIDATION_ANDROID_ATTESTATIONSTATEMENTVALIDITY_SKEW`  
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_ATTESTATIONSTATEMENTVALIDITY_SKEW`  
 Description: How far in the past, the creation date of a Key Attestation can be.  
 Default value: `5 minutes`  
 
-To disable this check, set the environment variable `KEYATTESTATIONVALIDATION_ANDROID_ATTESTATIONSTATEMENTVALIDITY` to `Disabled`.
+To disable this check, set the environment variable `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_ATTESTATIONSTATEMENTVALIDITY` to `Disabled`.
 
 ##### iOS Key Attestations
 
-Variable: `KEYATTESTATIONVALIDATION_IOS_APPLICATIONS_XX_TEAMIDENTIFIER`   
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_IOS_APPLICATIONS_XX_TEAMIDENTIFIER`   
 Description: The Team Identifier of the Wallet.  
 Default value: `N/A`  
 
-Variable: `KEYATTESTATIONVALIDATION_IOS_APPLICATIONS_XX_BUNDLEIDENTIFIER`   
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_IOS_APPLICATIONS_XX_BUNDLEIDENTIFIER`   
 Description: The Bundle Identifier of the Wallet.  
 Default value: `N/A`  
 
-Variable: `KEYATTESTATIONVALIDATION_IOS_APPLICATIONS_XX_ENVIRONMENT`    
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_IOS_APPLICATIONS_XX_ENVIRONMENT`    
 Description: Environment in which the Wallet is running.  
 Default value: `Production`   
 Allowed values:
 * `Production`
 * `Sandbox`
 
-Variable: `KEYATTESTATIONVALIDATION_IOS_ATTESTATIONSTATEMENTVALIDITY_SKEW`  
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_IOS_ATTESTATIONSTATEMENTVALIDITY_SKEW`  
 Description: How far in the past, the creation date of a Key Attestation can be.  
 Default value: `5 minutes`  
 
