@@ -87,6 +87,14 @@ private fun Logger.warn(failure: WalletUnitAttestationIssuanceFailure) {
             )
         }
 
+        is WalletUnitAttestationIssuanceFailure.InvalidPreferredTtl -> {
+            warn(
+                "WalletUnitAttestationIssuanceRequest validation failed, " +
+                    "preferred ttl is not valid. Requested: ${failure.requested}, " +
+                    "minimum allowed: ${failure.minimumAllowed}, maximum allowed: ${failure.maximumAllowed}",
+            )
+        }
+
         is WalletUnitAttestationIssuanceFailure.InvalidChallenge -> {
             warn(
                 "WalletUnitAttestationIssuanceRequest validation failed, Challenge is not valid: ${failure.error}",
@@ -146,6 +154,9 @@ private enum class WalletUnitAttestationError {
     @SerialName("unsupported_signing_algorithms")
     UnsupportedSigningAlgorithms,
 
+    @SerialName("invalid_preferred_ttl")
+    InvalidPreferredTtl,
+
     @SerialName("invalid_challenge")
     InvalidChallenge,
 
@@ -174,6 +185,10 @@ private fun WalletUnitAttestationIssuanceFailure.toWalletUnitAttestationErrorRes
     when (this) {
         is WalletUnitAttestationIssuanceFailure.UnsupportedSigningAlgorithms -> {
             nonEmptyListOf(WalletUnitAttestationError.UnsupportedSigningAlgorithms)
+        }
+
+        is WalletUnitAttestationIssuanceFailure.InvalidPreferredTtl -> {
+            nonEmptyListOf(WalletUnitAttestationError.InvalidPreferredTtl)
         }
 
         is WalletUnitAttestationIssuanceFailure.InvalidChallenge -> {

@@ -403,8 +403,7 @@ Default value: N/A
 
 Variable: `WALLETINSTANCEATTESTATION_VALIDITY`  
 Description: Duration a Wallet Instance Attestations is valid for.  
-Default value: `24 hours`  
-Maximum value: `24 hours`  
+Default value: `5 minutes`  
 
 Variable: `WALLETINSTANCEATTESTATION_WALLETNAME`  
 Description: Wallet Name that will be included in the Wallet Instance Attestations.  
@@ -416,10 +415,14 @@ Default value: N/A
 
 ### Wallet Unit Attestation Configuration
 
-Variable: `WALLETAUNITATTESTATION_VALIDITY`  
-Description: Duration a Wallet Unit Attestations is valid for.    
+Variable: `WALLETAUNITATTESTATION_VALIDITY_MINIMUM`  
+Description: Minimum duration a Wallet Unit Attestations is valid for.    
 Default value: `31 days`  
 Minimum value: `31 days`  
+
+Variable: `WALLETAUNITATTESTATION_VALIDITY_MAXIMUM`  
+Description: Maximum duration a Wallet Unit Attestations is valid for.    
+Default value: `62 days`  
 
 Variable: `WALLETUNITATTESTATION_KEYSTORAGE_XX`  
 Description: Case sensitive strings that assert the attack potential resistance of the key storage component and its keys attested.  

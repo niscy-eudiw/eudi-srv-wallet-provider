@@ -45,6 +45,7 @@ import eu.europa.ec.eudi.walletprovider.port.output.keyattestation.ValidateKeyAt
 import eu.europa.ec.eudi.walletprovider.port.output.tokenstatuslist.GenerateStatusListToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Required
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
@@ -57,6 +58,7 @@ fun interface IssueWalletUnitAttestation {
 sealed interface WalletUnitAttestationIssuanceRequest {
     val nonce: Nonce?
     val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>?
+    val preferredTtl: SecondsDuration?
 
     sealed interface PlatformKeyAttestation<out KeyAttestation : Attestation> : WalletUnitAttestationIssuanceRequest {
         val keyAttestations: NonEmptyList<KeyAttestation>
@@ -69,6 +71,7 @@ sealed interface WalletUnitAttestationIssuanceRequest {
             override val keyAttestations: NonEmptyList<AndroidKeystoreAttestation>,
             @Required override val challenge: Challenge,
             @Serializable(with = NonEmptyListSerializer::class) override val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>? = null,
+            @SerialName(ARF.PREFERRED_TTL) override val preferredTtl: SecondsDuration? = null,
         ) : PlatformKeyAttestation<AndroidKeystoreAttestation>
 
         @Serializable
@@ -78,6 +81,7 @@ sealed interface WalletUnitAttestationIssuanceRequest {
             override val keyAttestations: NonEmptyList<IosHomebrewAttestation>,
             @Required override val challenge: Challenge,
             @Serializable(with = NonEmptyListSerializer::class) override val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>? = null,
+            @SerialName(ARF.PREFERRED_TTL) override val preferredTtl: SecondsDuration? = null,
         ) : PlatformKeyAttestation<IosHomebrewAttestation>
     }
 
@@ -86,6 +90,7 @@ sealed interface WalletUnitAttestationIssuanceRequest {
         override val nonce: Nonce? = null,
         val jwkSet: JsonWebKeySet,
         @Serializable(with = NonEmptyListSerializer::class) override val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>? = null,
+        @SerialName(ARF.PREFERRED_TTL) override val preferredTtl: SecondsDuration? = null,
     ) : WalletUnitAttestationIssuanceRequest {
         init {
             require(jwkSet.keys.isNotEmpty()) { "jwkSet must not be empty" }
@@ -97,6 +102,12 @@ sealed interface WalletUnitAttestationIssuanceFailure {
     class UnsupportedSigningAlgorithms(
         val supportedSigningAlgorithm: JwsAlgorithm,
         val requestedSigningAlgorithms: NonEmptyList<JwsAlgorithm>,
+    ) : WalletUnitAttestationIssuanceFailure
+
+    data class InvalidPreferredTtl(
+        val requested: Duration,
+        val minimumAllowed: Duration,
+        val maximumAllowed: Duration,
     ) : WalletUnitAttestationIssuanceFailure
 
     class InvalidChallenge(
@@ -119,18 +130,18 @@ sealed interface WalletUnitAttestationIssuanceFailure {
 
 @JvmInline
 value class WalletUnitAttestationValidity(
-    val value: Duration,
+    val value: ClosedRange<Duration>,
 ) {
     init {
-        require(value.isPositive() && value >= ARF.MIN_WALLET_UNIT_ATTESTATION_VALIDITY)
+        require(value.start.isPositive() && value.start >= ARF.MIN_WALLET_UNIT_ATTESTATION_VALIDITY) {
+            "minimum value must be greater than ${ARF.MIN_WALLET_UNIT_ATTESTATION_VALIDITY}"
+        }
+        require(value.start < value.endInclusive) {
+            "maximum value must be greater than minimum value"
+        }
     }
 
     override fun toString(): String = value.toString()
-
-    companion object {
-        val ArfMin: WalletUnitAttestationValidity =
-            WalletUnitAttestationValidity(ARF.MIN_WALLET_UNIT_ATTESTATION_VALIDITY)
-    }
 }
 
 class IssueWalletUnitAttestationLive(
@@ -183,8 +194,20 @@ class IssueWalletUnitAttestationLive(
             ensureNotNull(attestedKeys) { WalletUnitAttestationIssuanceFailure.NoAttestedKeys }
             ensure(attestedKeys.distinct().size == attestedKeys.size) { WalletUnitAttestationIssuanceFailure.NonUniqueAttestedKeys }
 
+            val validity =
+                request.preferredTtl?.let {
+                    ensure(it in validity.value) {
+                        WalletUnitAttestationIssuanceFailure.InvalidPreferredTtl(
+                            requested = it,
+                            minimumAllowed = validity.value.start,
+                            maximumAllowed = validity.value.endInclusive,
+                        )
+                    }
+                    it
+                } ?: validity.value.start
+
             val issuedAt = clock.now()
-            val expiresAt = issuedAt + validity.value
+            val expiresAt = issuedAt + validity
             val statusListToken =
                 generateStatusListToken
                     ?.invoke(expiresAt)

@@ -253,17 +253,24 @@ data class WalletSecureCryptographicDeviceInformationConfiguration(
 )
 
 data class WalletInstanceAttestationConfiguration(
-    val validity: WalletInstanceAttestationValidity = WalletInstanceAttestationValidity.ArfMax,
+    val validity: WalletInstanceAttestationValidity = WalletInstanceAttestationValidity.Default,
     val walletName: WalletName? = null,
     val walletLink: WalletLink? = null,
 )
 
 data class WalletUnitAttestationConfiguration(
-    val validity: WalletUnitAttestationValidity = WalletUnitAttestationValidity.ArfMin,
+    val validity: ValidityConfiguration = ValidityConfiguration(),
     val keyStorage: List<AttackPotentialResistance>? = null,
     val userAuthentication: List<AttackPotentialResistance>? = null,
     val certification: StringUrl? = null,
-)
+) {
+    data class ValidityConfiguration(
+        val minimum: Duration = ARF.MIN_WALLET_UNIT_ATTESTATION_VALIDITY,
+        val maximum: Duration = ARF.MIN_WALLET_UNIT_ATTESTATION_VALIDITY * 2,
+    ) {
+        val closedRange: ClosedRange<Duration> = minimum..maximum
+    }
+}
 
 data class TokenStatusListServiceConfiguration(
     val serviceUrl: StringUrl,

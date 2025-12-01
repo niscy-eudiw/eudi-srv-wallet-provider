@@ -41,6 +41,7 @@ import eu.europa.ec.eudi.walletprovider.port.output.keyattestation.ValidateKeyAt
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 fun interface IssueWalletInstanceAttestation {
     suspend operator fun invoke(
@@ -98,14 +99,13 @@ value class WalletInstanceAttestationValidity(
     val value: Duration,
 ) {
     init {
-        require(value.isPositive() && value <= ARF.MAX_WALLET_APPLICATION_ATTESTATION_VALIDITY)
+        require(value.isPositive())
     }
 
     override fun toString(): String = value.toString()
 
     companion object {
-        val ArfMax: WalletInstanceAttestationValidity =
-            WalletInstanceAttestationValidity(ARF.MAX_WALLET_APPLICATION_ATTESTATION_VALIDITY)
+        val Default: WalletInstanceAttestationValidity = WalletInstanceAttestationValidity(5.minutes)
     }
 }
 

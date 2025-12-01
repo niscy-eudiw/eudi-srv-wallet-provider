@@ -349,6 +349,11 @@
           "H1"
         ]
       },
+      "SecondsDuration": {
+        "type": "number",
+        "format": "int64",
+        "description": "Duration in seconds"
+      },
       "AndroidPlatformKeyAttestationWalletInstanceAttestationIssuanceRequest": {
         "type": "object",
         "properties": {
@@ -495,6 +500,9 @@
               "$ref": "#/components/schemas/JwsAlgorithm"
             },
             "minItems": 1
+          },
+          "preferred_ttl": {
+            "$ref": "#/components/schemas/SecondsDuration"
           }
         },
         "required": [
@@ -519,6 +527,7 @@
         "type": "string",
         "enum": [
           "unsupported_signing_algorithms",
+          "invalid_preferred_ttl",
           "invalid_challenge",
           "invalid_key_attestation",
           "unsupported_attested_key",
@@ -567,6 +576,9 @@
               "$ref": "#/components/schemas/JwsAlgorithm"
             },
             "minItems": 1
+          },
+          "preferred_ttl": {
+            "$ref": "#/components/schemas/SecondsDuration"
           }
         },
         "required": [
@@ -607,6 +619,9 @@
               "$ref": "#/components/schemas/JwsAlgorithm"
             },
             "minItems": 1
+          },
+          "preferred_ttl": {
+            "$ref": "#/components/schemas/SecondsDuration"
           }
         },
         "required": [
