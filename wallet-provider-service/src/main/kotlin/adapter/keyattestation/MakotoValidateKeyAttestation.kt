@@ -17,10 +17,8 @@ package eu.europa.ec.eudi.walletprovider.adapter.keyattestation
 
 import arrow.core.Either
 import arrow.core.raise.either
-import arrow.core.raise.ensure
 import at.asitplus.attestation.AttestationResult
 import at.asitplus.signum.indispensable.Attestation
-import at.asitplus.signum.indispensable.CryptoPublicKey
 import at.asitplus.signum.indispensable.toCryptoPublicKey
 import eu.europa.ec.eudi.walletprovider.domain.Challenge
 import eu.europa.ec.eudi.walletprovider.domain.keyattestation.AttestedKey
@@ -62,11 +60,6 @@ class MakotoValidateKeyAttestation(
                             ),
                         )
                     }
-            ensure(cryptoPublicKey is CryptoPublicKey.EC) {
-                KeyAttestationValidationFailure.UnsupportedAttestedKey(
-                    "Attested PublicKey is not supported, only EC keys are supported".toNonBlankString(),
-                )
-            }
 
             AttestedKey(cryptoPublicKey, verificationResult.details)
         }

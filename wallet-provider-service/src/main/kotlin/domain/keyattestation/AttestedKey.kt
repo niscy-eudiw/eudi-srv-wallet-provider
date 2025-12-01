@@ -19,7 +19,7 @@ import at.asitplus.attestation.AttestationResult
 import at.asitplus.signum.indispensable.CryptoPublicKey
 
 data class AttestedKey(
-    val publicKey: CryptoPublicKey.EC,
+    val publicKey: CryptoPublicKey,
     val attestationResult: AttestationResult,
 ) {
     init {
