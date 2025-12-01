@@ -85,6 +85,13 @@ private fun Logger.warn(failure: WalletInstanceAttestationIssuanceFailure) {
                     null
             }
 
+            is WalletInstanceAttestationIssuanceFailure.ValidityExceedsMaxAllowsValue -> {
+                "WalletInstanceAttestationIssuanceRequest validation failed, " +
+                    "Requested validity exceeds maximum allowed value. Requested: ${failure.requested.toIsoString()}, " +
+                    "maximum allowed: ${failure.maximumAllowed.toIsoString()}" to
+                    null
+            }
+
             is WalletInstanceAttestationIssuanceFailure.InvalidChallenge -> {
                 "WalletInstanceAttestationIssuanceRequest validation failed, " +
                     "Challenge is not valid: ${failure.error}" to
@@ -126,6 +133,9 @@ private enum class WalletInstanceAttestationError {
     @SerialName("unsupported_signing_algorithms")
     UnsupportedSigningAlgorithms,
 
+    @SerialName("maximum_validity_exceeded")
+    MaximumValidityExceeded,
+
     @SerialName("invalid_challenge")
     InvalidChallenge,
 
@@ -145,6 +155,10 @@ private fun WalletInstanceAttestationIssuanceFailure.toWalletInstanceAttestation
     when (this) {
         is WalletInstanceAttestationIssuanceFailure.UnsupportedSigningAlgorithms -> {
             WalletInstanceAttestationError.UnsupportedSigningAlgorithms
+        }
+
+        is WalletInstanceAttestationIssuanceFailure.ValidityExceedsMaxAllowsValue -> {
+            WalletInstanceAttestationError.MaximumValidityExceeded
         }
 
         is WalletInstanceAttestationIssuanceFailure.InvalidChallenge -> {
