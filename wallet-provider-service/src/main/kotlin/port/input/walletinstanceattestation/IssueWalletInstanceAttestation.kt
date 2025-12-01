@@ -51,7 +51,6 @@ fun interface IssueWalletInstanceAttestation {
 
 sealed interface WalletInstanceAttestationIssuanceRequest {
     val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>?
-    val validity: IsoStringDuration?
 
     sealed interface PlatformKeyAttestation<out KeyAttestation : Attestation> : WalletInstanceAttestationIssuanceRequest {
         val keyAttestation: KeyAttestation
@@ -62,7 +61,6 @@ sealed interface WalletInstanceAttestationIssuanceRequest {
             @Required override val keyAttestation: AndroidKeystoreAttestation,
             @Required override val challenge: Challenge,
             @Serializable(with = NonEmptyListSerializer::class) override val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>? = null,
-            override val validity: IsoStringDuration? = null,
         ) : PlatformKeyAttestation<AndroidKeystoreAttestation>
 
         @Serializable
@@ -70,7 +68,6 @@ sealed interface WalletInstanceAttestationIssuanceRequest {
             @Required override val keyAttestation: IosHomebrewAttestation,
             @Required override val challenge: Challenge,
             @Serializable(with = NonEmptyListSerializer::class) override val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>? = null,
-            override val validity: IsoStringDuration? = null,
         ) : PlatformKeyAttestation<IosHomebrewAttestation>
     }
 
@@ -78,7 +75,6 @@ sealed interface WalletInstanceAttestationIssuanceRequest {
     data class Jwk(
         val jwk: JsonWebKey,
         @Serializable(with = NonEmptyListSerializer::class) override val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>? = null,
-        override val validity: IsoStringDuration? = null,
     ) : WalletInstanceAttestationIssuanceRequest
 }
 
@@ -86,11 +82,6 @@ sealed interface WalletInstanceAttestationIssuanceFailure {
     class UnsupportedSigningAlgorithms(
         val supportedSigningAlgorithm: JwsAlgorithm,
         val requestedSigningAlgorithms: NonEmptyList<JwsAlgorithm>,
-    ) : WalletInstanceAttestationIssuanceFailure
-
-    data class ValidityExceedsMaximumAllowedValue(
-        val requested: Duration,
-        val maximumAllowed: Duration,
     ) : WalletInstanceAttestationIssuanceFailure
 
     class InvalidChallenge(
@@ -164,19 +155,8 @@ class IssueWalletInstanceAttestationLive(
                     }
                 }
 
-            val validity =
-                request.validity?.let {
-                    ensure(it <= validity.value) {
-                        WalletInstanceAttestationIssuanceFailure.ValidityExceedsMaximumAllowedValue(
-                            requested = it,
-                            maximumAllowed = validity.value,
-                        )
-                    }
-                    it
-                } ?: validity.value
-
             val issuedAt = clock.now()
-            val expiresAt = issuedAt + validity
+            val expiresAt = issuedAt + validity.value
             val walletInstanceAttestation =
                 WalletInstanceAttestationClaims(
                     issuer,
