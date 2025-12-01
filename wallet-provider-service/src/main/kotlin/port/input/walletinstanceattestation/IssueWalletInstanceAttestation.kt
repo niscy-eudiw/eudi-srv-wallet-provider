@@ -23,10 +23,7 @@ import arrow.core.serialization.NonEmptyListSerializer
 import at.asitplus.signum.indispensable.AndroidKeystoreAttestation
 import at.asitplus.signum.indispensable.Attestation
 import at.asitplus.signum.indispensable.IosHomebrewAttestation
-import at.asitplus.signum.indispensable.josef.ConfirmationClaim
-import at.asitplus.signum.indispensable.josef.JsonWebKey
-import at.asitplus.signum.indispensable.josef.JwsAlgorithm
-import at.asitplus.signum.indispensable.josef.toJsonWebKey
+import at.asitplus.signum.indispensable.josef.*
 import eu.europa.ec.eudi.walletprovider.domain.*
 import eu.europa.ec.eudi.walletprovider.domain.time.Clock
 import eu.europa.ec.eudi.walletprovider.domain.walletinformation.GeneralInformation
@@ -50,7 +47,7 @@ fun interface IssueWalletInstanceAttestation {
 }
 
 sealed interface WalletInstanceAttestationIssuanceRequest {
-    val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>?
+    val supportedSigningAlgorithms: NonEmptyList<JsonWebAlgorithm>?
 
     sealed interface PlatformKeyAttestation<out KeyAttestation : Attestation> : WalletInstanceAttestationIssuanceRequest {
         val keyAttestation: KeyAttestation
@@ -60,28 +57,32 @@ sealed interface WalletInstanceAttestationIssuanceRequest {
         data class Android(
             @Required override val keyAttestation: AndroidKeystoreAttestation,
             @Required override val challenge: Challenge,
-            @Serializable(with = NonEmptyListSerializer::class) override val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>? = null,
+            @Serializable(
+                with = NonEmptyListSerializer::class,
+            ) override val supportedSigningAlgorithms: NonEmptyList<JsonWebAlgorithm>? = null,
         ) : PlatformKeyAttestation<AndroidKeystoreAttestation>
 
         @Serializable
         data class Ios(
             @Required override val keyAttestation: IosHomebrewAttestation,
             @Required override val challenge: Challenge,
-            @Serializable(with = NonEmptyListSerializer::class) override val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>? = null,
+            @Serializable(
+                with = NonEmptyListSerializer::class,
+            ) override val supportedSigningAlgorithms: NonEmptyList<JsonWebAlgorithm>? = null,
         ) : PlatformKeyAttestation<IosHomebrewAttestation>
     }
 
     @Serializable
     data class Jwk(
         val jwk: JsonWebKey,
-        @Serializable(with = NonEmptyListSerializer::class) override val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>? = null,
+        @Serializable(with = NonEmptyListSerializer::class) override val supportedSigningAlgorithms: NonEmptyList<JsonWebAlgorithm>? = null,
     ) : WalletInstanceAttestationIssuanceRequest
 }
 
 sealed interface WalletInstanceAttestationIssuanceFailure {
     class UnsupportedSigningAlgorithms(
         val supportedSigningAlgorithm: JwsAlgorithm,
-        val requestedSigningAlgorithms: NonEmptyList<JwsAlgorithm>,
+        val requestedSigningAlgorithms: NonEmptyList<JsonWebAlgorithm>,
     ) : WalletInstanceAttestationIssuanceFailure
 
     class InvalidChallenge(
