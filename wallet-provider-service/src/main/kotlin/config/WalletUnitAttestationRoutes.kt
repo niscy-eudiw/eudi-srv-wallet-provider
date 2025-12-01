@@ -87,6 +87,14 @@ private fun Logger.warn(failure: WalletUnitAttestationIssuanceFailure) {
             )
         }
 
+        is WalletUnitAttestationIssuanceFailure.ValidityDoesNotExceedMinimumAllowedValue -> {
+            warn(
+                "WalletUnitAttestationIssuanceRequest validation failed, " +
+                    "validity does not exceed minimum allowed value. Requested: ${failure.requested.toIsoString()}, " +
+                    "minimum allowed: ${failure.minimumAllowed.toIsoString()}",
+            )
+        }
+
         is WalletUnitAttestationIssuanceFailure.InvalidChallenge -> {
             warn(
                 "WalletUnitAttestationIssuanceRequest validation failed, Challenge is not valid: ${failure.error}",
@@ -146,6 +154,9 @@ private enum class WalletUnitAttestationError {
     @SerialName("unsupported_signing_algorithms")
     UnsupportedSigningAlgorithms,
 
+    @SerialName("minimum_validity_not_exceeded")
+    MinimumValidityNotExceeded,
+
     @SerialName("invalid_challenge")
     InvalidChallenge,
 
@@ -174,6 +185,10 @@ private fun WalletUnitAttestationIssuanceFailure.toWalletUnitAttestationErrorRes
     when (this) {
         is WalletUnitAttestationIssuanceFailure.UnsupportedSigningAlgorithms -> {
             nonEmptyListOf(WalletUnitAttestationError.UnsupportedSigningAlgorithms)
+        }
+
+        is WalletUnitAttestationIssuanceFailure.ValidityDoesNotExceedMinimumAllowedValue -> {
+            nonEmptyListOf(WalletUnitAttestationError.MinimumValidityNotExceeded)
         }
 
         is WalletUnitAttestationIssuanceFailure.InvalidChallenge -> {

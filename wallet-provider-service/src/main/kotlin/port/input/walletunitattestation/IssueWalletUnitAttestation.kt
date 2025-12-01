@@ -57,6 +57,7 @@ fun interface IssueWalletUnitAttestation {
 sealed interface WalletUnitAttestationIssuanceRequest {
     val nonce: Nonce?
     val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>?
+    val validity: IsoStringDuration?
 
     sealed interface PlatformKeyAttestation<out KeyAttestation : Attestation> : WalletUnitAttestationIssuanceRequest {
         val keyAttestations: NonEmptyList<KeyAttestation>
@@ -69,6 +70,7 @@ sealed interface WalletUnitAttestationIssuanceRequest {
             override val keyAttestations: NonEmptyList<AndroidKeystoreAttestation>,
             @Required override val challenge: Challenge,
             @Serializable(with = NonEmptyListSerializer::class) override val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>? = null,
+            override val validity: IsoStringDuration? = null,
         ) : PlatformKeyAttestation<AndroidKeystoreAttestation>
 
         @Serializable
@@ -78,6 +80,7 @@ sealed interface WalletUnitAttestationIssuanceRequest {
             override val keyAttestations: NonEmptyList<IosHomebrewAttestation>,
             @Required override val challenge: Challenge,
             @Serializable(with = NonEmptyListSerializer::class) override val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>? = null,
+            override val validity: IsoStringDuration? = null,
         ) : PlatformKeyAttestation<IosHomebrewAttestation>
     }
 
@@ -86,6 +89,7 @@ sealed interface WalletUnitAttestationIssuanceRequest {
         override val nonce: Nonce? = null,
         val jwkSet: JsonWebKeySet,
         @Serializable(with = NonEmptyListSerializer::class) override val supportedSigningAlgorithms: NonEmptyList<JwsAlgorithm>? = null,
+        override val validity: IsoStringDuration? = null,
     ) : WalletUnitAttestationIssuanceRequest {
         init {
             require(jwkSet.keys.isNotEmpty()) { "jwkSet must not be empty" }
@@ -97,6 +101,11 @@ sealed interface WalletUnitAttestationIssuanceFailure {
     class UnsupportedSigningAlgorithms(
         val supportedSigningAlgorithm: JwsAlgorithm,
         val requestedSigningAlgorithms: NonEmptyList<JwsAlgorithm>,
+    ) : WalletUnitAttestationIssuanceFailure
+
+    data class ValidityDoesNotExceedMinimumAllowedValue(
+        val requested: Duration,
+        val minimumAllowed: Duration,
     ) : WalletUnitAttestationIssuanceFailure
 
     class InvalidChallenge(
@@ -183,8 +192,19 @@ class IssueWalletUnitAttestationLive(
             ensureNotNull(attestedKeys) { WalletUnitAttestationIssuanceFailure.NoAttestedKeys }
             ensure(attestedKeys.distinct().size == attestedKeys.size) { WalletUnitAttestationIssuanceFailure.NonUniqueAttestedKeys }
 
+            val validity =
+                request.validity?.let {
+                    ensure(it >= validity.value) {
+                        WalletUnitAttestationIssuanceFailure.ValidityDoesNotExceedMinimumAllowedValue(
+                            requested = it,
+                            minimumAllowed = validity.value,
+                        )
+                    }
+                    it
+                } ?: validity.value
+
             val issuedAt = clock.now()
-            val expiresAt = issuedAt + validity.value
+            val expiresAt = issuedAt + validity
             val statusListToken =
                 generateStatusListToken
                     ?.invoke(expiresAt)

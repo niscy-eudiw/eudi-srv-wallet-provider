@@ -88,7 +88,7 @@ sealed interface WalletInstanceAttestationIssuanceFailure {
         val requestedSigningAlgorithms: NonEmptyList<JwsAlgorithm>,
     ) : WalletInstanceAttestationIssuanceFailure
 
-    data class ValidityExceedsMaxAllowsValue(
+    data class ValidityExceedsMaximumAllowedValue(
         val requested: Duration,
         val maximumAllowed: Duration,
     ) : WalletInstanceAttestationIssuanceFailure
@@ -167,7 +167,7 @@ class IssueWalletInstanceAttestationLive(
             val validity =
                 request.validity?.let {
                     ensure(it <= validity.value) {
-                        WalletInstanceAttestationIssuanceFailure.ValidityExceedsMaxAllowsValue(
+                        WalletInstanceAttestationIssuanceFailure.ValidityExceedsMaximumAllowedValue(
                             requested = it,
                             maximumAllowed = validity.value,
                         )

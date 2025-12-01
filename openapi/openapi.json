@@ -509,6 +509,9 @@
               "$ref": "#/components/schemas/JwsAlgorithm"
             },
             "minItems": 1
+          },
+          "validity": {
+            "$ref": "#/components/schemas/Duration"
           }
         },
         "required": [
@@ -533,6 +536,7 @@
         "type": "string",
         "enum": [
           "unsupported_signing_algorithms",
+          "minimum_validity_not_exceeded",
           "invalid_challenge",
           "invalid_key_attestation",
           "unsupported_attested_key",
@@ -581,6 +585,9 @@
               "$ref": "#/components/schemas/JwsAlgorithm"
             },
             "minItems": 1
+          },
+          "validity": {
+            "$ref": "#/components/schemas/Duration"
           }
         },
         "required": [
@@ -621,6 +628,9 @@
               "$ref": "#/components/schemas/JwsAlgorithm"
             },
             "minItems": 1
+          },
+          "validity": {
+            "$ref": "#/components/schemas/Duration"
           }
         },
         "required": [

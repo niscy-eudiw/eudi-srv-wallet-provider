@@ -85,7 +85,7 @@ private fun Logger.warn(failure: WalletInstanceAttestationIssuanceFailure) {
                     null
             }
 
-            is WalletInstanceAttestationIssuanceFailure.ValidityExceedsMaxAllowsValue -> {
+            is WalletInstanceAttestationIssuanceFailure.ValidityExceedsMaximumAllowedValue -> {
                 "WalletInstanceAttestationIssuanceRequest validation failed, " +
                     "Requested validity exceeds maximum allowed value. Requested: ${failure.requested.toIsoString()}, " +
                     "maximum allowed: ${failure.maximumAllowed.toIsoString()}" to
@@ -157,7 +157,7 @@ private fun WalletInstanceAttestationIssuanceFailure.toWalletInstanceAttestation
             WalletInstanceAttestationError.UnsupportedSigningAlgorithms
         }
 
-        is WalletInstanceAttestationIssuanceFailure.ValidityExceedsMaxAllowsValue -> {
+        is WalletInstanceAttestationIssuanceFailure.ValidityExceedsMaximumAllowedValue -> {
             WalletInstanceAttestationError.MaximumValidityExceeded
         }
 
