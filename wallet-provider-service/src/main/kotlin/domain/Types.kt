@@ -17,7 +17,7 @@ package eu.europa.ec.eudi.walletprovider.domain
 
 import at.asitplus.signum.indispensable.io.ByteArrayBase64UrlSerializer
 import at.asitplus.signum.indispensable.josef.io.InstantLongSerializer
-import eu.europa.ec.eudi.walletprovider.adapter.serialization.DurationIsoStringSerializer
+import eu.europa.ec.eudi.walletprovider.adapter.serialization.DurationSecondsSerializer
 import eu.europa.ec.eudi.walletprovider.adapter.serialization.UriStringSerializer
 import eu.europa.ec.eudi.walletprovider.adapter.serialization.UrlStringSerializer
 import kotlinx.serialization.Serializable
@@ -88,6 +88,6 @@ value class Challenge(
     override fun toString(): String = value.toString()
 }
 
-typealias IsoStringDuration =
-    @Serializable(with = DurationIsoStringSerializer::class)
+typealias SecondsDuration =
+    @Serializable(with = DurationSecondsSerializer::class)
     Duration

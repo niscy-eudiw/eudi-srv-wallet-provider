@@ -349,9 +349,10 @@
           "H1"
         ]
       },
-      "Duration": {
-        "type": "string",
-        "description": "ISO 8601 duration format, e.g. PT1H for 1 hour"
+      "SecondsDuration": {
+        "type": "number",
+        "format": "int64",
+        "description": "Duration in seconds"
       },
       "AndroidPlatformKeyAttestationWalletInstanceAttestationIssuanceRequest": {
         "type": "object",
@@ -500,8 +501,8 @@
             },
             "minItems": 1
           },
-          "validity": {
-            "$ref": "#/components/schemas/Duration"
+          "preferred_ttl": {
+            "$ref": "#/components/schemas/SecondsDuration"
           }
         },
         "required": [
@@ -526,7 +527,7 @@
         "type": "string",
         "enum": [
           "unsupported_signing_algorithms",
-          "minimum_validity_not_exceeded",
+          "invalid_preferred_ttl",
           "invalid_challenge",
           "invalid_key_attestation",
           "unsupported_attested_key",
@@ -576,8 +577,8 @@
             },
             "minItems": 1
           },
-          "validity": {
-            "$ref": "#/components/schemas/Duration"
+          "preferred_ttl": {
+            "$ref": "#/components/schemas/SecondsDuration"
           }
         },
         "required": [
@@ -619,8 +620,8 @@
             },
             "minItems": 1
           },
-          "validity": {
-            "$ref": "#/components/schemas/Duration"
+          "preferred_ttl": {
+            "$ref": "#/components/schemas/SecondsDuration"
           }
         },
         "required": [

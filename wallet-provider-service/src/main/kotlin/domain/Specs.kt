@@ -58,6 +58,8 @@ object ARF {
     const val WALLET_SECURE_CRYPTOGRAPHIC_DEVICE_TYPE_LOCAL_NATIVE: String = "LOCAL_NATIVE"
     const val WALLET_SECURE_CRYPTOGRAPHIC_DEVICE_TYPE_HYBRID: String = "HYBRID"
     const val WALLET_SECURE_CRYPTOGRAPHIC_CERTIFICATION_INFORMATION: String = "wscd_certification_information"
+
+    const val PREFERRED_TTL: String = "preferred_ttl"
 }
 
 object TokenStatusListSpec {

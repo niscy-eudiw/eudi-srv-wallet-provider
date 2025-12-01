@@ -24,6 +24,7 @@ import kotlinx.serialization.encoding.Encoder
 import java.net.URI
 import java.net.URL
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 object UriStringSerializer : KSerializer<URI> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("UriStringSerializer", PrimitiveKind.STRING)
@@ -51,15 +52,15 @@ object UrlStringSerializer : KSerializer<URL> {
     override fun deserialize(decoder: Decoder): URL = URI.create(decoder.decodeString()).toURL()
 }
 
-object DurationIsoStringSerializer : KSerializer<Duration> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("DurationStringSerializer", PrimitiveKind.STRING)
+object DurationSecondsSerializer : KSerializer<Duration> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("DurationSecondsSerializer", PrimitiveKind.LONG)
 
     override fun serialize(
         encoder: Encoder,
         value: Duration,
     ) {
-        encoder.encodeString(value.toIsoString())
+        encoder.encodeLong(value.inWholeSeconds)
     }
 
-    override fun deserialize(decoder: Decoder): Duration = Duration.parseIsoString(decoder.decodeString())
+    override fun deserialize(decoder: Decoder): Duration = decoder.decodeLong().seconds
 }
