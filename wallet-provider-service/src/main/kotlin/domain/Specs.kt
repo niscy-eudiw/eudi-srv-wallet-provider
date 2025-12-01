@@ -48,7 +48,6 @@ object ARF {
     const val WALLET_SOLUTION_ID: String = "wallet_solution_id"
     const val WALLET_SOLUTION_VERSION: String = "wallet_solution_version"
     const val WALLET_SOLUTION_CERTIFICATION_INFORMATION: String = "wallet_solution_certification_information"
-    val MAX_WALLET_APPLICATION_ATTESTATION_VALIDITY: Duration = 24.hours
     val MIN_WALLET_UNIT_ATTESTATION_VALIDITY: Duration = 31.days
 
     const val WALLET_SECURE_CRYPTOGRAPHIC_DEVICE_INFORMATION: String = "wscd_info"

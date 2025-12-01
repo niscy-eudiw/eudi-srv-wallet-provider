@@ -253,7 +253,7 @@ data class WalletSecureCryptographicDeviceInformationConfiguration(
 )
 
 data class WalletInstanceAttestationConfiguration(
-    val validity: WalletInstanceAttestationValidity = WalletInstanceAttestationValidity.ArfMax,
+    val validity: WalletInstanceAttestationValidity = WalletInstanceAttestationValidity.Default,
     val walletName: WalletName? = null,
     val walletLink: WalletLink? = null,
 )
