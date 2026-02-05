@@ -132,10 +132,15 @@ sealed interface PlatformKeyAttestationValidationConfiguration {
         val android: AndroidKeyAttestationConfiguration = AndroidKeyAttestationConfiguration(),
         val ios: IosKeyAttestationConfiguration = IosKeyAttestationConfiguration(),
         val verificationTimeSkew: Duration = 0.seconds,
-    ) : PlatformKeyAttestationValidationConfiguration
+    ) : PlatformKeyAttestationValidationConfiguration {
+        init {
+            require(android.enabled || ios.enabled) { "At least one type of platform Key Attestation must be enabled" }
+        }
+    }
 }
 
 data class AndroidKeyAttestationConfiguration(
+    val enabled: Boolean = true,
     val applications: List<ApplicationConfiguration> = emptyList(),
     val strongBoxRequired: Boolean = false,
     val unlockedBootloaderAllowed: Boolean = false,
@@ -144,8 +149,8 @@ data class AndroidKeyAttestationConfiguration(
     val verificationSkew: Duration = 0.seconds,
     val attestationStatementValidity: AttestationStatementValidity = AttestationStatementValidity.Enforced(),
     val hardwareAttestationEnabled: Boolean = true,
-    val nougatAttestationEnabled: Boolean = false,
     val softwareAttestationEnabled: Boolean = false,
+    val supremeParserEnabled: Boolean = false,
 ) {
     data class ApplicationConfiguration(
         val packageName: PackageName,
@@ -164,6 +169,7 @@ sealed interface AttestationStatementValidity {
 }
 
 data class IosKeyAttestationConfiguration(
+    val enabled: Boolean = true,
     val applications: List<ApplicationConfiguration> = emptyList(),
     val attestationStatementValiditySkew: Duration = 5.minutes,
 ) {

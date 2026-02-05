@@ -257,11 +257,11 @@ By default, Wallet Provider performs no validation of platform Key Attestations.
 
 To enable platform Key Attestation validation, use the following environment variables:
 
-> [!NOTE]  
-> Due to limitations of the [Warden Supreme Attestation Library](https://github.com/a-sit-plus/warden-supreme), when enabling Key Attestation
-validation, you must configure both Android and iOS Key Attestation validation.
+#### Android Key Attestation
 
-#### Android Key Attestations
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_ENABLED`   
+Description: Whether Android platform Key Attestations are enabled or not.  
+Default value: `true`
 
 Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_APPLICATIONS_XX_PACKAGENAME`   
 Description: Android Package of the Wallet.  
@@ -295,13 +295,13 @@ Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_HARDWAREATTESTATIONENABLED`
 Description: Whether **hardware** Key Attestations are accepted.  
 Default value: `true`  
 
-Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_NOUGATATTESTATIONENABLED`  
-Description: Whether Key Attestations generated on Devices with **Android Nougat** are accepted.  
-Default value: `false`  
-
 Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_SOFTWAREATTESTATIONENABLED`  
 Description: Whether **software** Key Attestations are accepted.  
 Default value: `false`  
+
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_SUPREMEPARSERENABLED`  
+Description: Whether to enable the Android platform Key Attestation parser provided by Warden Supreme.  
+Default value: `false`
 
 **Validity of Key Attestation**
 
@@ -314,7 +314,11 @@ Default value: `5 minutes`
 
 To disable this check, set the environment variable `PLATFORMKEYATTESTATIONVALIDATION_ANDROID_ATTESTATIONSTATEMENTVALIDITY` to `Disabled`.
 
-##### iOS Key Attestations
+##### iOS Key Attestation
+
+Variable: `PLATFORMKEYATTESTATIONVALIDATION_IOS_ENABLED`   
+Description: Whether iOS platform Key Attestations are enabled or not.  
+Default value: `true`
 
 Variable: `PLATFORMKEYATTESTATIONVALIDATION_IOS_APPLICATIONS_XX_TEAMIDENTIFIER`   
 Description: The Team Identifier of the Wallet.  

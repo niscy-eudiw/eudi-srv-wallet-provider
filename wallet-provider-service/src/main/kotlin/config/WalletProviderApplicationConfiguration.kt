@@ -292,53 +292,83 @@ private fun createMakotoAttestationService(
 
         is PlatformKeyAttestationValidationConfiguration.Enabled -> {
             val androidAttestation =
-                with(config.platformKeyAttestationValidation.android) {
-                    AndroidAttestationConfiguration(
-                        applications =
-                            applications.map { application ->
-                                AndroidAttestationConfiguration.AppData
-                                    .Builder(
-                                        packageName = application.packageName.value,
-                                        signatureDigests = application.signingCertificateDigests,
-                                    ).build()
-                            },
-                        requireStrongBox = strongBoxRequired,
-                        allowBootloaderUnlock = unlockedBootloaderAllowed,
-                        requireRollbackResistance = rollbackResistanceRequired,
-                        ignoreLeafValidity = leafCertificateValidityIgnored,
-                        verificationSecondsOffset = verificationSkew.inWholeSeconds,
-                        attestationStatementValiditySeconds =
-                            when (attestationStatementValidity) {
-                                AttestationStatementValidity.Ignored -> null
-                                is AttestationStatementValidity.Enforced -> attestationStatementValidity.skew.inWholeSeconds
-                            },
-                        disableHardwareAttestation = !hardwareAttestationEnabled,
-                        enableNougatAttestation = nougatAttestationEnabled,
-                        enableSoftwareAttestation = softwareAttestationEnabled,
-                    )
-                }
+                if (!config.platformKeyAttestationValidation.android.enabled)
+                    null
+                else
+                    with(config.platformKeyAttestationValidation.android) {
+                        AndroidAttestationConfiguration(
+                            applications =
+                                applications.map { application ->
+                                    AndroidAttestationConfiguration.AppData
+                                        .Builder(
+                                            packageName = application.packageName.value,
+                                            signatureDigests = application.signingCertificateDigests,
+                                        ).build()
+                                },
+                            requireStrongBox = strongBoxRequired,
+                            allowBootloaderUnlock = unlockedBootloaderAllowed,
+                            requireRollbackResistance = rollbackResistanceRequired,
+                            ignoreLeafValidity = leafCertificateValidityIgnored,
+                            verificationSecondsOffset = verificationSkew.inWholeSeconds,
+                            attestationStatementValiditySeconds =
+                                when (attestationStatementValidity) {
+                                    AttestationStatementValidity.Ignored -> null
+                                    is AttestationStatementValidity.Enforced -> attestationStatementValidity.skew.inWholeSeconds
+                                },
+                            disableHardwareAttestation = !hardwareAttestationEnabled,
+                            enableSoftwareAttestation = softwareAttestationEnabled,
+                            supremeParser = supremeParserEnabled,
+                        )
+                    }
 
             val iosAttestation =
-                with(config.platformKeyAttestationValidation.ios) {
-                    IosAttestationConfiguration(
-                        applications =
-                            applications.map { application ->
-                                IosAttestationConfiguration.AppData
-                                    .Builder(
-                                        teamIdentifier = application.team.value,
-                                        bundleIdentifier = application.bundle.value,
-                                    ).sandbox(IosEnvironment.Sandbox == application.environment)
-                                    .build()
-                            },
-                        attestationStatementValiditySeconds = attestationStatementValiditySkew.inWholeSeconds,
+                if (!config.platformKeyAttestationValidation.ios.enabled)
+                    null
+                else
+                    with(config.platformKeyAttestationValidation.ios) {
+                        IosAttestationConfiguration(
+                            applications =
+                                applications.map { application ->
+                                    IosAttestationConfiguration.AppData
+                                        .Builder(
+                                            teamIdentifier = application.team.value,
+                                            bundleIdentifier = application.bundle.value,
+                                        ).sandbox(IosEnvironment.Sandbox == application.environment)
+                                        .build()
+                                },
+                            attestationStatementValiditySeconds = attestationStatementValiditySkew.inWholeSeconds,
+                        )
+                    }
+
+            when {
+                null != androidAttestation && null != iosAttestation -> {
+                    Makoto(
+                        androidAttestationConfiguration = androidAttestation,
+                        iosAttestationConfiguration = iosAttestation,
+                        clock = clock.toKotlinClock(),
+                        verificationTimeOffset = config.platformKeyAttestationValidation.verificationTimeSkew,
                     )
                 }
 
-            Makoto(
-                androidAttestationConfiguration = androidAttestation,
-                iosAttestationConfiguration = iosAttestation,
-                clock = clock.toKotlinClock(),
-                verificationTimeOffset = config.platformKeyAttestationValidation.verificationTimeSkew,
-            )
+                null != androidAttestation -> {
+                    Makoto(
+                        androidAttestationConfiguration = androidAttestation,
+                        clock = clock.toKotlinClock(),
+                        verificationTimeOffset = config.platformKeyAttestationValidation.verificationTimeSkew,
+                    )
+                }
+
+                null != iosAttestation -> {
+                    Makoto(
+                        iosAttestationConfiguration = iosAttestation,
+                        clock = clock.toKotlinClock(),
+                        verificationTimeOffset = config.platformKeyAttestationValidation.verificationTimeSkew,
+                    )
+                }
+
+                else -> {
+                    error("At this point either androidAttestation or iosAttestation must have been configured")
+                }
+            }
         }
     }
