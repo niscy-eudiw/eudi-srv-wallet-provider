@@ -23,6 +23,7 @@ import eu.europa.ec.eudi.walletprovider.domain.walletinformation.GeneralInformat
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class WalletInstanceAttestationClaims(
@@ -36,6 +37,7 @@ data class WalletInstanceAttestationClaims(
     @SerialName(OpenId4VCISpec.WALLET_LINK) val walletLink: WalletLink? = null,
     @SerialName(TokenStatusListSpec.STATUS) val status: Status? = null,
     @Required @SerialName(ARF.EUDI_WALLET_INFORMATION) val walletInformation: WalletInformation,
+    @SerialName(CustomFields.WALLET_METADATA) val walletMetadata: WalletMetadata? = null,
 ) {
     @Serializable
     data class WalletInformation(
@@ -45,4 +47,12 @@ data class WalletInstanceAttestationClaims(
 
 typealias WalletName = NonBlankString
 typealias WalletLink = StringUrl
+
+/**
+ * Custom metadata provided by the Wallet to be included in the issued Wallet Instance Attestation.
+ *
+ * Can be any valid JSON value (object, array, string, number, boolean, or null).
+ */
+typealias WalletMetadata = JsonElement
+
 typealias WalletInstanceAttestation = JwsSigned<WalletInstanceAttestationClaims>

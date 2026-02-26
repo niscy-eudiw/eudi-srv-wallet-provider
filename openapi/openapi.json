@@ -338,6 +338,12 @@
         "format": "int64",
         "description": "Duration in seconds"
       },
+      "Any": {
+        "description": "Any valid JSON value (object, array, string, number, boolean, or null)"
+      },
+      "WalletMetadata": {
+        "$ref": "#/components/schemas/Any"
+      },
       "AndroidPlatformKeyAttestationWalletInstanceAttestationIssuanceRequest": {
         "type": "object",
         "properties": {
@@ -353,6 +359,16 @@
               "$ref": "#/components/schemas/JsonWebAlgorithm"
             },
             "minItems": 1
+          },
+          "walletMetadata": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WalletMetadata"
+              },
+              {
+                "description": "Custom metadata provided by the Wallet to be included in the issued Wallet Instance Attestation"
+              }
+            ]
           }
         },
         "required": [
@@ -394,6 +410,16 @@
               "$ref": "#/components/schemas/JsonWebAlgorithm"
             },
             "minItems": 1
+          },
+          "walletMetadata": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WalletMetadata"
+              },
+              {
+                "description": "Custom metadata provided by the Wallet to be included in the issued Wallet Instance Attestation"
+              }
+            ]
           }
         },
         "required": [
@@ -418,6 +444,16 @@
               "$ref": "#/components/schemas/JsonWebAlgorithm"
             },
             "minItems": 1
+          },
+          "walletMetadata": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WalletMetadata"
+              },
+              {
+                "description": "Custom metadata provided by the Wallet to be included in the issued Wallet Instance Attestation"
+              }
+            ]
           }
         },
         "required": [

@@ -15,36 +15,9 @@
  */
 package eu.europa.ec.eudi.walletprovider
 
-import eu.europa.ec.eudi.walletprovider.config.*
-import eu.europa.ec.eudi.walletprovider.domain.toNonBlankString
-import eu.europa.ec.eudi.walletprovider.domain.walletinformation.*
-import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
 
 class MainTest {
     @Test
-    fun `verify wallet provider application loads`() =
-        testResourceScopedApplication {
-            val config =
-                WalletProviderConfiguration(
-                    walletInformation =
-                        WalletInformationConfiguration(
-                            GeneralInformationConfiguration(
-                                provider = WalletProviderName("Wallet Provider"),
-                                id = SolutionId("EUDI Wallet"),
-                                version = SolutionVersion("1.0.0"),
-                                certification = CertificationInformation(JsonPrimitive("ARF")),
-                            ),
-                            WalletSecureCryptographicDeviceInformationConfiguration(
-                                WalletSecureCryptographicDeviceType.LocalNative,
-                                CertificationInformation(JsonPrimitive("ARF")),
-                            ),
-                        ),
-                    swaggerUi = SwaggerUiConfiguration.Enabled(swaggerFile = "../openapi/openapi.json".toNonBlankString()),
-                )
-
-            application {
-                configureWalletProviderApplication(config)
-            }
-        }
+    fun `verify wallet provider application loads`() = runWalletProviderTestCase { }
 }
