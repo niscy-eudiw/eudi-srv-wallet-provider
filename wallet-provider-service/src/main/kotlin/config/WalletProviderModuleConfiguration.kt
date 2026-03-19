@@ -21,7 +21,7 @@ import at.asitplus.attestation.NoopAttestationService
 import at.asitplus.attestation.android.AndroidAttestationConfiguration
 import at.asitplus.signum.indispensable.pki.CertificateChain
 import at.asitplus.signum.supreme.sign.Signer
-import eu.europa.ec.eudi.walletprovider.adapter.jose.SignJwt
+import eu.europa.ec.eudi.walletprovider.adapter.crypto.jose.JoseSignJwt
 import eu.europa.ec.eudi.walletprovider.adapter.persistence.RunInTransactionLive
 import eu.europa.ec.eudi.walletprovider.adapter.persistence.challenge.ChallengeRepositoryLive
 import eu.europa.ec.eudi.walletprovider.adapter.platformkeyattestation.MakotoValidatePlatformKeyAttestation
@@ -121,7 +121,7 @@ fun Application.configureWalletProviderModule(
             config.walletInstanceAttestation.walletSolutionCertificationInformation,
             config.walletInstanceAttestation.clientStatusValidity,
             generateStatusListToken,
-            SignJwt(
+            JoseSignJwt(
                 signer,
                 certificateChain,
                 JwtType(AttestationBasedClientAuthenticationSpec.CLIENT_ATTESTATION_JWT_TYPE),
@@ -136,7 +136,7 @@ fun Application.configureWalletProviderModule(
             config.keyAttestation.validity,
             generateStatusListToken,
             config.keyAttestation.certification,
-            SignJwt(
+            JoseSignJwt(
                 signer,
                 certificateChain,
                 JwtType(OpenId4VCISpec.KEY_ATTESTATION_JWT_TYPE),

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.europa.ec.eudi.walletprovider.adapter.jose
+package eu.europa.ec.eudi.walletprovider.adapter.crypto.jose
 
 import arrow.core.raise.catch
 import arrow.core.raise.context.raise
@@ -23,10 +23,11 @@ import at.asitplus.signum.supreme.sign.Verifier
 import at.asitplus.signum.supreme.sign.verifierFor
 import at.asitplus.signum.supreme.sign.verify
 import eu.europa.ec.eudi.walletprovider.domain.toNonBlankString
-import eu.europa.ec.eudi.walletprovider.port.output.jose.JwtSignatureValidationFailure
-import eu.europa.ec.eudi.walletprovider.port.output.jose.ValidateJwtSignature
+import eu.europa.ec.eudi.walletprovider.port.output.crypto.JwtSignatureValidationFailure
+import eu.europa.ec.eudi.walletprovider.port.output.crypto.ValidateJwtSignature
 
-inline fun <reified T : Any> ValidateJwtSignature(verifier: Verifier): ValidateJwtSignature<T> =
+@Suppress("FunctionName")
+inline fun <reified T : Any> JoseValidateJwtSignature(verifier: Verifier): ValidateJwtSignature<T> =
     ValidateJwtSignature { unvalidated ->
         val parsed =
             catch({
@@ -54,5 +55,6 @@ inline fun <reified T : Any> ValidateJwtSignature(verifier: Verifier): ValidateJ
         parsed
     }
 
-inline fun <reified T : Any> ValidateJwtSignature(singer: Signer): ValidateJwtSignature<T> =
-    ValidateJwtSignature(singer.signatureAlgorithm.verifierFor(singer.publicKey).getOrThrow())
+@Suppress("FunctionName")
+inline fun <reified T : Any> JoseValidateJwtSignature(singer: Signer): ValidateJwtSignature<T> =
+    JoseValidateJwtSignature(singer.signatureAlgorithm.verifierFor(singer.publicKey).getOrThrow())

@@ -13,13 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.europa.ec.eudi.walletprovider.port.output.jose
+package eu.europa.ec.eudi.walletprovider.port.output.crypto
 
-import at.asitplus.signum.indispensable.josef.JwsAlgorithm
+import arrow.core.raise.context.Raise
 import at.asitplus.signum.indispensable.josef.JwsCompactTyped
+import eu.europa.ec.eudi.walletprovider.domain.NonBlankString
 
-interface SignJwt<T : Any> {
-    val signingAlgorithm: JwsAlgorithm
+fun interface ValidateJwtSignature<T : Any> {
+    context(_: Raise<JwtSignatureValidationFailure>)
+    suspend operator fun invoke(unvalidated: String): JwsCompactTyped<T>
+}
 
-    suspend operator fun invoke(claims: T): JwsCompactTyped<T>
+sealed interface JwtSignatureValidationFailure {
+    class UnparsableJwt(
+        val error: NonBlankString,
+        val cause: Throwable? = null,
+    ) : JwtSignatureValidationFailure
+
+    class InvalidSignature(
+        val error: NonBlankString,
+        val cause: Throwable? = null,
+    ) : JwtSignatureValidationFailure
 }

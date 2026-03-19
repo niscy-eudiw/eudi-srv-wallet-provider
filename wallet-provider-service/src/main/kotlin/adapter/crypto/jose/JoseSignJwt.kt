@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.europa.ec.eudi.walletprovider.adapter.jose
+package eu.europa.ec.eudi.walletprovider.adapter.crypto.jose
 
 import at.asitplus.signum.indispensable.josef.*
 import at.asitplus.signum.indispensable.pki.CertificateChain
 import at.asitplus.signum.supreme.sign.Signer
 import at.asitplus.signum.supreme.signature
 import eu.europa.ec.eudi.walletprovider.domain.JwtType
-import eu.europa.ec.eudi.walletprovider.port.output.jose.SignJwt
+import eu.europa.ec.eudi.walletprovider.port.output.crypto.SignJwt
 
-inline fun <reified T : Any> SignJwt(
+@Suppress("FunctionName")
+inline fun <reified T : Any> JoseSignJwt(
     signer: Signer,
     certificateChain: CertificateChain?,
     type: JwtType,
