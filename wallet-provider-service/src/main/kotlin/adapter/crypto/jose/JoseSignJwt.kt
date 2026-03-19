@@ -27,10 +27,15 @@ inline fun <reified T : Any> JoseSignJwt(
     signer: Signer,
     certificateChain: CertificateChain?,
     type: JwtType,
-): SignJwt<T> =
-    object : SignJwt<T> {
+): SignJwt<T> {
+    val signingAlgorithm =
+        signer.signatureAlgorithm.toJwsAlgorithm().getOrElse {
+            throw IllegalArgumentException("signer is not using a JwsAlgorithm", it)
+        }
+
+    return object : SignJwt<T> {
         override val signingAlgorithm: JwsAlgorithm
-            get() = signer.signatureAlgorithm.toJwsAlgorithm().getOrThrow()
+            get() = signingAlgorithm
 
         override suspend fun invoke(claims: T): JwsCompactTyped<T> {
             val header =
@@ -50,3 +55,4 @@ inline fun <reified T : Any> JoseSignJwt(
             }
         }
     }
+}

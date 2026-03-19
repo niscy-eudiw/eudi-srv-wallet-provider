@@ -21,6 +21,7 @@ import at.asitplus.attestation.NoopAttestationService
 import at.asitplus.attestation.android.AndroidAttestationConfiguration
 import at.asitplus.signum.indispensable.pki.CertificateChain
 import at.asitplus.signum.supreme.sign.Signer
+import eu.europa.ec.eudi.walletprovider.adapter.crypto.jades.JadesSignJwt
 import eu.europa.ec.eudi.walletprovider.adapter.crypto.jose.JoseSignJwt
 import eu.europa.ec.eudi.walletprovider.adapter.persistence.RunInTransactionLive
 import eu.europa.ec.eudi.walletprovider.adapter.persistence.challenge.ChallengeRepositoryLive
@@ -38,6 +39,7 @@ import eu.europa.ec.eudi.walletprovider.port.input.keyattestation.IssueKeyAttest
 import eu.europa.ec.eudi.walletprovider.port.input.walletinstanceattestation.IssueWalletInstanceAttestationLive
 import eu.europa.ec.eudi.walletprovider.port.output.challenge.ValidateChallengeLive
 import eu.europa.ec.eudi.walletprovider.port.output.challenge.ValidateChallengeNoop
+import eu.europa.ec.eudi.walletprovider.port.output.crypto.SignJwt
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.http.*
@@ -59,7 +61,7 @@ import at.asitplus.attestation.AttestationService as MakotoAttestationService
 
 private val logger = LoggerFactory.getLogger("WalletProviderModule")
 
-fun Application.configureWalletProviderModule(
+suspend fun Application.configureWalletProviderModule(
     config: WalletProviderConfiguration,
     clock: Clock,
     json: Json,
@@ -121,7 +123,7 @@ fun Application.configureWalletProviderModule(
             config.walletInstanceAttestation.walletSolutionCertificationInformation,
             config.walletInstanceAttestation.clientStatusValidity,
             generateStatusListToken,
-            JoseSignJwt(
+            config.signerType.signJwt(
                 signer,
                 certificateChain,
                 JwtType(AttestationBasedClientAuthenticationSpec.CLIENT_ATTESTATION_JWT_TYPE),
@@ -136,7 +138,7 @@ fun Application.configureWalletProviderModule(
             config.keyAttestation.validity,
             generateStatusListToken,
             config.keyAttestation.certification,
-            JoseSignJwt(
+            config.signerType.signJwt(
                 signer,
                 certificateChain,
                 JwtType(OpenId4VCISpec.KEY_ATTESTATION_JWT_TYPE),
@@ -174,6 +176,16 @@ private fun Application.configureServerPlugins(
         }
     }
 }
+
+private suspend inline fun <reified T : Any> SignerType.signJwt(
+    signer: Signer,
+    certificateChain: CertificateChain,
+    type: JwtType,
+): SignJwt<T> =
+    when (this) {
+        SignerType.JOSE -> JoseSignJwt(signer, certificateChain, type)
+        SignerType.JAdES -> JadesSignJwt(signer, certificateChain, type)
+    }
 
 private fun createMakotoAttestationService(
     config: WalletProviderConfiguration,

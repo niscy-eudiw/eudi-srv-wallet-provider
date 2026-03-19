@@ -15,6 +15,7 @@
  */
 package eu.europa.ec.eudi.walletprovider.domain
 
+import at.asitplus.signum.indispensable.josef.JwsAlgorithm
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -99,4 +100,17 @@ object TS3 {
     const val WALLET_SOLUTION_CERTIFICATION_INFORMATION: String = "wallet_solution_certification_information"
     const val CLIENT_STATUS: String = "client_status"
     const val KEY_STORAGE_STATUS: String = "key_storage_status"
+    val ALLOWED_SIGNATURE_ALGORITHMS: Set<JwsAlgorithm.Signature.EC> =
+        setOf(
+            JwsAlgorithm.Signature.EC.ES256,
+            JwsAlgorithm.Signature.EC.ES384,
+            JwsAlgorithm.Signature.EC.ES512,
+        )
+}
+
+/**
+ * [JSON Web Signature (JWS)](https://www.rfc-editor.org/info/rfc7515)
+ */
+object RFC7515 {
+    const val TYPE: String = "typ"
 }

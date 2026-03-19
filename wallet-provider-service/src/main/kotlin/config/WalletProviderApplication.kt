@@ -23,6 +23,7 @@ import eu.europa.ec.eudi.walletprovider.domain.time.Clock
 import io.ktor.client.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import io.ktor.client.engine.cio.CIO as CIOClientEngine
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
@@ -68,15 +69,17 @@ object WalletProviderApplication {
                     grace = config.server.grace.value,
                     timeout = config.server.timeout.value,
                 ) {
-                    configureWalletProviderModule(
-                        config,
-                        clock,
-                        json,
-                        database,
-                        signer,
-                        certificateChain,
-                        httpClient,
-                    )
+                    runBlocking {
+                        configureWalletProviderModule(
+                            config,
+                            clock,
+                            json,
+                            database,
+                            signer,
+                            certificateChain,
+                            httpClient,
+                        )
+                    }
                 }
                 awaitCancellation()
             }

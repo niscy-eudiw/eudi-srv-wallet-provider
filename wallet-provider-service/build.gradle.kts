@@ -22,6 +22,7 @@ dependencies {
     implementation(enforcedPlatform(libs.ktor.bom))
     implementation(enforcedPlatform(libs.slf4j.bom))
     implementation(enforcedPlatform(libs.arrow.bom))
+    implementation(enforcedPlatform(libs.dss.bom))
     components.all<VirtualPlatformAlignmentRule> {
         val virtualPlatform = libs.bouncycastle.bom.get()
         params(virtualPlatform.group, virtualPlatform.name)
@@ -62,6 +63,9 @@ dependencies {
     implementation(libs.warden.makoto)
     implementation(libs.indispensable.josef)
     implementation(libs.supreme)
+
+    implementation(libs.dss.jades)
+    implementation(libs.dss.utils.apache.commons)
 
     implementation(libs.hoplite.core)
 

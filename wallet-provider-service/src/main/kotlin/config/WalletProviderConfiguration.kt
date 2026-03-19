@@ -40,6 +40,7 @@ import kotlin.time.Duration.Companion.seconds
 data class WalletProviderConfiguration(
     val server: ServerConfiguration = ServerConfiguration(),
     val database: DatabaseConfiguration,
+    val signerType: SignerType = SignerType.JOSE,
     val signingKey: SigningKeyConfiguration,
     val platformKeyAttestationValidation: PlatformKeyAttestationValidationConfiguration = PlatformKeyAttestationValidationConfiguration.Disabled,
     val challenge: ChallengeConfiguration = ChallengeConfiguration(),
@@ -84,6 +85,11 @@ value class ZeroOrPositiveDuration(
     }
 
     override fun toString(): String = value.toString()
+}
+
+enum class SignerType {
+    JOSE,
+    JAdES,
 }
 
 data class SigningKeyConfiguration(
