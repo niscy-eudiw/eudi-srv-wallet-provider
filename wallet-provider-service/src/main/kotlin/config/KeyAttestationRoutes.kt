@@ -35,43 +35,44 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import kotlin.reflect.KClass
 
 private val logger = LoggerFactory.getLogger("KeyAttestationRoutes")
 
 fun Application.configureKeyAttestationRoutes(issueKeyAttestation: IssueKeyAttestation) {
     routing {
         route("/key-attestation") {
-            suspend fun <T : KeyAttestationIssuanceRequest> RoutingContext.issueKeyAttestation(requestType: KClass<T>) {
-                val request = call.receive(requestType)
-                logger.info("Received KeyAttestationIssuanceRequest: {}", request)
-
-                effect {
-                    val keyAttestation = issueKeyAttestation(request)
-                    logger.info("Successfully issued KeyAttestation: {}", keyAttestation)
-                    call.respond(HttpStatusCode.OK, keyAttestation.toKeyAttestationResponse())
-                }.getOrElse { failure ->
-                    logger.warn(failure)
-                    call.respond(HttpStatusCode.BadRequest, failure.toKeyAttestationErrorResponse())
-                }
-            }
-
             route("/platform-key-attestation/android") {
                 post {
-                    issueKeyAttestation(KeyAttestationIssuanceRequest.PlatformKeyAttestation.Android::class)
+                    issueKeyAttestation<KeyAttestationIssuanceRequest.PlatformKeyAttestation.Android>()
                 }
             }
             route("/platform-key-attestation/ios") {
                 post {
-                    issueKeyAttestation(KeyAttestationIssuanceRequest.PlatformKeyAttestation.Ios::class)
+                    issueKeyAttestation<KeyAttestationIssuanceRequest.PlatformKeyAttestation.Ios>()
                 }
             }
             route("/jwk-set") {
                 post {
-                    issueKeyAttestation(KeyAttestationIssuanceRequest.JwkSet::class)
+                    issueKeyAttestation<KeyAttestationIssuanceRequest.JwkSet>()
                 }
             }
         }
+    }
+}
+
+context(context: RoutingContext)
+private suspend inline operator fun <reified T : KeyAttestationIssuanceRequest> IssueKeyAttestation.invoke() {
+    val call = context.call
+    val request = call.receive<T>()
+    logger.info("Received KeyAttestationIssuanceRequest: {}", request)
+
+    effect {
+        val keyAttestation = invoke(request)
+        logger.info("Successfully issued KeyAttestation: {}", keyAttestation)
+        call.respond(HttpStatusCode.OK, keyAttestation.toKeyAttestationResponse())
+    }.getOrElse { failure ->
+        logger.warn(failure)
+        call.respond(HttpStatusCode.BadRequest, failure.toKeyAttestationErrorResponse())
     }
 }
 

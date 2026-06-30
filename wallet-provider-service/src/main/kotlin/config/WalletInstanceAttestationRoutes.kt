@@ -32,45 +32,44 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import kotlin.reflect.KClass
 
 private val logger = LoggerFactory.getLogger("WalletInstanceAttestationRoutes")
 
 fun Application.configureWalletInstanceAttestationRoutes(issueWalletInstanceAttestation: IssueWalletInstanceAttestation) {
     routing {
         route("/wallet-instance-attestation") {
-            suspend fun <T : WalletInstanceAttestationIssuanceRequest> RoutingContext.issueWalletInstanceAttestation(
-                requestType: KClass<T>,
-            ) {
-                val request = call.receive(requestType)
-                logger.info("Received WalletInstanceAttestationIssuanceRequest: {}", request)
-
-                effect {
-                    val walletInstanceAttestation = issueWalletInstanceAttestation(request)
-                    logger.info("Successfully issued WalletInstanceAttestation: {}", walletInstanceAttestation)
-                    call.respond(HttpStatusCode.OK, walletInstanceAttestation.toWalletInstanceAttestationResponse())
-                }.getOrElse { failure ->
-                    logger.warn(failure)
-                    call.respond(HttpStatusCode.BadRequest, failure.toWalletInstanceAttestationErrorResponse())
-                }
-            }
-
             route("/platform-key-attestation/android") {
                 post {
-                    issueWalletInstanceAttestation(WalletInstanceAttestationIssuanceRequest.PlatformKeyAttestation.Android::class)
+                    issueWalletInstanceAttestation<WalletInstanceAttestationIssuanceRequest.PlatformKeyAttestation.Android>()
                 }
             }
             route("/platform-key-attestation/ios") {
                 post {
-                    issueWalletInstanceAttestation(WalletInstanceAttestationIssuanceRequest.PlatformKeyAttestation.Ios::class)
+                    issueWalletInstanceAttestation<WalletInstanceAttestationIssuanceRequest.PlatformKeyAttestation.Ios>()
                 }
             }
             route("/jwk") {
                 post {
-                    issueWalletInstanceAttestation(WalletInstanceAttestationIssuanceRequest.Jwk::class)
+                    issueWalletInstanceAttestation<WalletInstanceAttestationIssuanceRequest.Jwk>()
                 }
             }
         }
+    }
+}
+
+context(context: RoutingContext)
+private suspend inline operator fun <reified T : WalletInstanceAttestationIssuanceRequest> IssueWalletInstanceAttestation.invoke() {
+    val call = context.call
+    val request = call.receive<T>()
+    logger.info("Received WalletInstanceAttestationIssuanceRequest: {}", request)
+
+    effect {
+        val walletInstanceAttestation = invoke(request)
+        logger.info("Successfully issued WalletInstanceAttestation: {}", walletInstanceAttestation)
+        call.respond(HttpStatusCode.OK, walletInstanceAttestation.toWalletInstanceAttestationResponse())
+    }.getOrElse { failure ->
+        logger.warn(failure)
+        call.respond(HttpStatusCode.BadRequest, failure.toWalletInstanceAttestationErrorResponse())
     }
 }
 
