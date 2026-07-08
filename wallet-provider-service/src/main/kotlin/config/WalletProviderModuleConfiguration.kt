@@ -17,15 +17,17 @@ package eu.europa.ec.eudi.walletprovider.config
 
 import arrow.core.Ior
 import arrow.core.NonEmptyList
+import arrow.core.right
 import at.asitplus.attestation.IosAttestationConfiguration
 import at.asitplus.attestation.Makoto
 import at.asitplus.attestation.NoopAttestationService
 import at.asitplus.attestation.android.AndroidAttestationConfiguration
 import at.asitplus.signum.indispensable.pki.X509Certificate
 import eu.europa.ec.eudi.walletprovider.adapter.jose.SignJwt
-import eu.europa.ec.eudi.walletprovider.adapter.persistence.RunInTransactionLive
-import eu.europa.ec.eudi.walletprovider.adapter.persistence.challenge.ChallengeRepositoryLive
-import eu.europa.ec.eudi.walletprovider.adapter.platformkeyattestation.MakotoValidatePlatformKeyAttestation
+import eu.europa.ec.eudi.walletprovider.adapter.persistence.RunInTransaction
+import eu.europa.ec.eudi.walletprovider.adapter.persistence.challenge.ChallengeRepository
+import eu.europa.ec.eudi.walletprovider.adapter.persistence.forUpdateOption
+import eu.europa.ec.eudi.walletprovider.adapter.platformkeyattestation.ValidatePlatformKeyAttestation
 import eu.europa.ec.eudi.walletprovider.adapter.tokenstatuslist.AllocateStatusListToken
 import eu.europa.ec.eudi.walletprovider.adapter.tokenstatuslist.ApiKey
 import eu.europa.ec.eudi.walletprovider.config.IosKeyAttestationConfiguration.ApplicationConfiguration.IosEnvironment
@@ -36,10 +38,9 @@ import eu.europa.ec.eudi.walletprovider.domain.specification.OpenId4VCI
 import eu.europa.ec.eudi.walletprovider.domain.time.Clock
 import eu.europa.ec.eudi.walletprovider.domain.time.toKotlinClock
 import eu.europa.ec.eudi.walletprovider.port.input.challenge.GenerateChallengeLive
-import eu.europa.ec.eudi.walletprovider.port.input.keyattestation.IssueKeyAttestationLive
-import eu.europa.ec.eudi.walletprovider.port.input.walletinstanceattestation.IssueWalletInstanceAttestationLive
-import eu.europa.ec.eudi.walletprovider.port.output.challenge.ValidateChallengeLive
-import eu.europa.ec.eudi.walletprovider.port.output.challenge.ValidateChallengeNoop
+import eu.europa.ec.eudi.walletprovider.port.input.keyattestation.IssueKeyAttestation
+import eu.europa.ec.eudi.walletprovider.port.input.walletinstanceattestation.IssueWalletInstanceAttestation
+import eu.europa.ec.eudi.walletprovider.port.output.challenge.ValidateChallenge
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.http.*
@@ -74,28 +75,28 @@ fun Application.configureWalletProviderModule(
 
     configureServerPlugins(json, config.swaggerUi)
 
+    val challengeRepository = ChallengeRepository(database.forUpdateOption)
+    val runInTransaction = RunInTransaction(database)
+
     val generateChallenge =
         GenerateChallengeLive(
             clock = clock,
             length = config.challenge.length,
             validity = config.challenge.validity,
-            runInTransaction = RunInTransactionLive,
-            challengeRepository = ChallengeRepositoryLive,
+            runInTransaction = runInTransaction,
+            challengeRepository = challengeRepository,
         )
 
     val validateChallenge =
         if (null != config.platformKeyAttestationValidation) {
-            ValidateChallengeLive(
-                runInTransaction = RunInTransactionLive,
-                challengeRepository = ChallengeRepositoryLive,
-            )
+            ValidateChallenge(runInTransaction, challengeRepository)
         } else {
             logger.warn("Challenge Validation is currently disabled")
-            ValidateChallengeNoop
+            ValidateChallenge { _, _ -> Unit.right() }
         }
 
     val makotoAttestationService = createMakotoAttestationService(config, clock)
-    val validatePlatformKeyAttestation = MakotoValidatePlatformKeyAttestation(makotoAttestationService)
+    val validatePlatformKeyAttestation = ValidatePlatformKeyAttestation(makotoAttestationService)
 
     val allocateStatusListToken =
         AllocateStatusListToken(
@@ -109,7 +110,7 @@ fun Application.configureWalletProviderModule(
         )
 
     val issueWalletInstanceAttestation =
-        IssueWalletInstanceAttestationLive(
+        IssueWalletInstanceAttestation(
             clock,
             validateChallenge,
             validatePlatformKeyAttestation,
@@ -130,7 +131,7 @@ fun Application.configureWalletProviderModule(
         )
 
     val issueKeyAttestation =
-        IssueKeyAttestationLive(
+        IssueKeyAttestation(
             clock,
             validateChallenge,
             validatePlatformKeyAttestation,
