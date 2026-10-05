@@ -32,7 +32,6 @@ dependencies {
     }
     implementation(enforcedPlatform(libs.exposed.bom))
     implementation(enforcedPlatform(libs.reactor.bom))
-    implementation(enforcedPlatform(libs.dss.bom))
     testImplementation(enforcedPlatform(libs.testcontainers.bom))
 
     implementation(libs.kotlin.stdlib)
@@ -80,9 +79,6 @@ dependencies {
     runtimeOnly(libs.r2dbc.pool)
 
     implementation(libs.uri.kmp)
-
-    implementation(libs.dss.utils.apache.commons)
-    implementation(libs.dss.jades)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
